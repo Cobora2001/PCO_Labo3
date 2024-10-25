@@ -90,6 +90,14 @@ protected:
     std::map<ItemType, int> stocks;
     int money;
     int uniqueId;
+    PcoMutex mutex; // Mutex pour protéger les stocks
+    bool isRunning = true; // Flag pour arrêter le thread
+
+    /*added*/
+    bool isStillRunning() { 
+        PcoMutexLocker lock(mutex);
+        return isRunning;
+    }
 };
 
 #endif // SELLER_H

@@ -116,6 +116,9 @@ private:
      * @return true si les ressources sont suffisantes, false sinon.
      */
     bool verifyResources();
+
+    /*added*/
+    bool shouldStop();
 };
 
 class Pulmonology : public Clinic {

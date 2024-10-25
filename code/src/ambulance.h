@@ -88,6 +88,9 @@ public:
      */
     std::vector<ItemType> getResourcesSupplied() const;
 
+    /*added*/
+    bool shouldStop();
+
 protected:
     /**
      * @brief sendPatient

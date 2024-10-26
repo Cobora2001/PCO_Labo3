@@ -32,7 +32,29 @@ void Hospital::updateInterface() {
 }
 
 int Hospital::request(ItemType what, int qty){
-    // TODO 
+    if (what == ItemType::PatientSick && qty > 0) {
+        mutex.lock();
+        if(getNumberSick < qty) {
+            int totalCost = qty * getCostPerUnit(ItemType::PatientSick);
+
+            getNumberSick -= qty;
+            currentBeds -= qty;
+            money += totalCost;
+            mutex.unlock();
+
+            mutexInterface.lock();
+            interface->consoleAppendText(uniqueId, QString("Provided " + qty + " sick patient" + qty > 1 ? "s" : ""));
+            updateInterface();
+            mutexInterface.unlock();
+
+            return totalCost;
+        }
+        mutex.unlock();
+    }
+    
+    mutexInterface.lock();
+    interface->consoleAppendText(uniqueId, "Refused request for " + QString::number(qty) + " " + getItemName(what));
+    mutexInterface.unlock();
     return 0;
 }
 
@@ -45,9 +67,9 @@ void Hospital::transferPatientsFromClinic() {
 }
 
 int Hospital::send(ItemType it, int qty, int bill) {
-    if(it == ItemType::PatientSick || qty > 0 || qty <= (maxBeds - currentBeds)) {
+    if(it == ItemType::PatientSick && qty > 0) {
         mutex.lock();
-        if (money >= bill) {
+        if (money >= bill && qty <= (maxBeds - currentBeds)) {
             getNumberSick() += qty;
             currentBeds += qty;
             money -= bill;

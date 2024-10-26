@@ -6,7 +6,14 @@
 IWindowInterface* Hospital::interface = nullptr;
 
 Hospital::Hospital(int uniqueId, int fund, int maxBeds)
-    : Seller(fund, uniqueId), maxBeds(maxBeds), currentBeds(0), nbHospitalised(0), nbFree(0)
+    : Seller(fund, uniqueId),
+      maxBeds(maxBeds),
+      currentBeds(0),
+      nbHospitalised(0),
+      nbFree(0),
+      mutex(new PcoMutex()),
+      mutexInterface(new PcoMutex),
+      healedPatientsQueue(new std::array<int,NB_DAYS_OF_REST>())
 {
     interface->updateFund(uniqueId, fund);
     interface->consoleAppendText(uniqueId, "Hospital Created with " + QString::number(maxBeds) + " beds");
@@ -59,7 +66,21 @@ int Hospital::request(ItemType what, int qty){
 }
 
 void Hospital::freeHealedPatient() {
-    // TODO 
+    mutex.lock();
+    int nbLetGo = healedPatientsQueue[0];
+    nbFree += nbLetGo;
+    getNumberHealed() -= nbLetGo;
+    money += nbLetGo * PRICE_OF_HEALING;
+    for(int i = 0; i < NB_DAYS_OF_REST - 1; ++i) {
+        healedPatientsQueue[i] = healedPatientsQueue[i+1];
+    }
+    healedPatientsQueue[NB_DAYS_OF_REST - 1] = 0;
+    mutex.unlock();
+
+    mutexInterface.lock();
+    interface->consoleAppendText(uniqueId, "Let go " + QString::number(nbLetGo) + " healed patient" + nbLetGo > 1 ? "s" : "");
+    updateInterface();
+    mutexInterface.unlock();
 }
 
 void Hospital::transferPatientsFromClinic() {

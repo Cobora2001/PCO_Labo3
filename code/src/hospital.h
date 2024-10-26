@@ -2,10 +2,14 @@
 #define HOSPITAL_H
 
 #include <vector>
+#include <array>
 #include <pcosynchro/pcomutex.h>
 
 #include "iwindowinterface.h"
 #include "seller.h"
+
+#define NB_DAYS_OF_REST 5
+#define PRICE_OF_HEALING 30
 
 /**
  * @brief The Hospital class
@@ -123,6 +127,8 @@ private:
 
     PcoMutex mutex; // Mutex pour la synchronisation des threads
     PcoMutex mutexInterface; // Mutex pour la synchronisation avec l'interface graphique
+
+    std::array<int, NB_DAYS_OF_REST> healedPatientsQueue; // Liste du nombre de jours à attendre à l'hôpital pour les patients soignés
 };
 
 #endif // HOSPITAL_H

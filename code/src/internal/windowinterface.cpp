@@ -84,5 +84,4 @@ void WindowInterface::simulateWork(){
 void WindowInterface::setUtils(Utils* utils)
 {
     mainwindow->setUtils(utils);
-    QObject::connect(mainwindow, &MainWindow::sig_windowClosed, utils, &Utils::externalEndService);
 }

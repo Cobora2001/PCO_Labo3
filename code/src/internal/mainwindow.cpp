@@ -76,7 +76,6 @@ void MainWindow::set_link(int from, int to){
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     std::cout << "close !" << std::endl;
-    emit sig_windowClosed();
     utils->externalEndService();
     QMessageBox::information(this, "Final report", utils->getFinalReport());
     event->accept();

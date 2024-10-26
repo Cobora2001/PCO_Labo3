@@ -9,7 +9,7 @@
 #include "seller.h"
 
 #define NB_DAYS_OF_REST 5
-#define PRICE_OF_HEALING 30
+#define PRICE_OF_HEALING 50
 
 /**
  * @brief The Hospital class

@@ -109,9 +109,11 @@ void Hospital::transferPatientsFromClinic() {
         {
             int cost = chosenClinic->request(ItemType::PatientHealed, 1);
             if (cost > 0) {
+                static int employeeSalary = getEmployeeSalary(EmployeeType::Nurse);
                 ++getNumberHealed();
                 ++currentBeds;
                 money -= cost;
+                money -= employeeSalary;
                 ++nbHospitalised;
                 ++healedPatientsQueue[NB_DAYS_OF_REST - 1]; // Ajouter un patient avec NB_DAYS_OF_REST jours de repos restants
 

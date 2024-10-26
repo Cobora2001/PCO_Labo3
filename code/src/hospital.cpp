@@ -50,7 +50,7 @@ int Hospital::request(ItemType what, int qty){
             mutex.unlock();
 
             mutexInterface.lock();
-            interface->consoleAppendText(uniqueId, QString("Provided " + qty + " sick patient" + qty > 1 ? "s" : ""));
+            interface->consoleAppendText(uniqueId, QString("Provided " + QString::number(qty) + " sick patient" + (qty > 1 ? "s" : "")));
             updateInterface();
             mutexInterface.unlock();
 
@@ -94,11 +94,11 @@ void Hospital::transferPatientsFromClinic() {
         return;
     }
 
-    std::vector<Seller*> clinicsTried = new std::vector<Seller*>();
+    std::vector<Seller*> clinicsTried;
     do
     {
         Seller* chosenClinic = Seller::chooseRandomSeller(clinics);
-        if (clinicsTried.find(chosenClinic) != clinicsTried.end()) {
+        if (std::find(clinicsTried.begin(), clinicsTried.end(), chosenClinic) != clinicsTried.end()) {
             continue;
         }
         clinicsTried.push_back(chosenClinic);
@@ -118,7 +118,7 @@ void Hospital::transferPatientsFromClinic() {
                 ++healedPatientsQueue[NB_DAYS_OF_REST - 1]; // Ajouter un patient avec NB_DAYS_OF_REST jours de repos restants
 
                 mutexInterface.lock();
-                interface->consoleAppendText(uniqueId, "Transferred a patient from clinic " + QString::number(chosenClinic->getUniqueId()));
+                interface->consoleAppendText(uniqueId, QString("Transferred a patient from clinic %1").arg(chosenClinic->getUniqueId()));
                 updateInterface();
                 mutexInterface.unlock();
             } else {

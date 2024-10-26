@@ -25,7 +25,7 @@ int& Ambulance::getNumberSick(){
 }
 
 void Ambulance::sendPatient(){
-    if(getNumberPatients <= 0){
+    if(getNumberPatients() <= 0){
         interface->consoleAppendText(uniqueId, QString("No patient to send"));
         return;
     }
@@ -50,7 +50,9 @@ void Ambulance::sendPatient(){
         money -= employeeSalary;
         ++nbTransfer;
 
-        interface->consoleAppendText(uniqueId, QString("Sent " + MAX_PATIENTS_PER_TRANSFER + " patient to hospital " + chosenHospital->getUniqueId()));
+        interface->consoleAppendText(uniqueId, QString("Sent %1 patient to hospital %2")
+            .arg(MAX_PATIENTS_PER_TRANSFER)
+            .arg(chosenHospital->getUniqueId()));
     } else {
         interface->consoleAppendText(uniqueId, QString("Failed to send patient to hospital"));
     }

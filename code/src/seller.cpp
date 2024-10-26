@@ -69,3 +69,8 @@ int getEmployeeSalary(EmployeeType employee) {
         default : return 0;
     }
 }
+
+void Seller::setFinished() {
+    finished = true;
+}
+

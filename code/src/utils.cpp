@@ -2,7 +2,24 @@
 
 
 void Utils::endService() {
-    // TODO
+    // Set finished flag to true for each entity
+    for (auto& ambulance : ambulances) {
+        ambulance->setFinished();
+    }
+    for (auto& supplier : suppliers) {
+        supplier->setFinished();
+    }
+    for (auto& clinic : clinics) {
+        clinic->setFinished();
+    }
+    for (auto& hospital : hospitals) {
+        hospital->setFinished();
+    }
+
+    // Wait for all threads to complete their tasks
+    for (auto& thread : threads) {
+        thread->join();  // Blocks until thread completes
+    }
 }
 
 void Utils::externalEndService() {

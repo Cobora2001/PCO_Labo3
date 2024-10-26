@@ -8,6 +8,8 @@
 #include "costs.h"
 #include "seller.h"
 
+#define MAX_PATIENTS_PER_TRANSFER 1
+
 /**
  * @brief La classe Ambulance représente une ambulance capable de transporter des patients
  *        et de gérer les ressources nécessaires à leur traitement.

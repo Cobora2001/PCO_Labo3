@@ -21,7 +21,33 @@ Ambulance::Ambulance(int uniqueId, int fund, std::vector<ItemType> resourcesSupp
 }
 
 void Ambulance::sendPatient(){
-    // TODO
+    if(stocks[ItemType::PatientSick] <= 0){
+        interface->consoleAppendText(uniqueId, QString("No patient to send"));
+        return;
+    }
+
+    Seller* chosenHospital = chooseRandomSeller(hospitals);
+
+    if(!chosenHospital){
+        interface->consoleAppendText(uniqueId, QString("No hospital to send patient"));
+        return;
+    }
+
+    int patientCost = getCostPerUnit(ItemType::PatientSick);
+    int sent = chosenHospital->send(ItemType::PatientSick,
+                                    MAX_PATIENTS_PER_TRANSFER,
+                                    MAX_PATIENTS_PER_TRANSFER * patientCost);
+
+    if(sent > 0){
+        --stocks[ItemType::PatientSick];
+        money += patientCost;
+        money -= getEmployeeSalary(EmployeeType::Supplier);
+        ++nbTransfer;
+
+        interface->consoleAppendText(uniqueId, QString("Sent 1 patient to hospital %1").arg(chosenHospital->getUniqueId()));
+    } else {
+        interface->consoleAppendText(uniqueId, QString("Failed to send patient to hospital"));
+    }
 }
 
 void Ambulance::run() {

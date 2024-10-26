@@ -75,6 +75,9 @@ public:
      */
     static void setInterface(IWindowInterface* windowInterface);
 
+    /*added*/
+    bool shouldStop();
+
 private:
     /**
      * @brief transferPatientsFromClinic

@@ -21,6 +21,12 @@ int Supplier::request(ItemType it, int qty) {
     return 0;
 }
 
+/*added*/
+bool Supplier::shouldStop() {
+    PcoMutexLocker lock(mutex);
+    return (money < getEmployeeSalary(EmployeeType::Supplier) || nbSupplied >= 1000);
+}
+
 void Supplier::run() {
     interface->consoleAppendText(uniqueId, "[START] Supplier routine");
     while (true /*TODO*/) {

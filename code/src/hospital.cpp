@@ -11,9 +11,9 @@ Hospital::Hospital(int uniqueId, int fund, int maxBeds)
       currentBeds(0),
       nbHospitalised(0),
       nbFree(0),
-      mutex(new PcoMutex()),
-      mutexInterface(new PcoMutex),
-      healedPatientsQueue(new std::array<int,NB_DAYS_OF_REST>())
+      mutex(),
+      mutexInterface(),
+      healedPatientsQueue({0})
 {
     interface->updateFund(uniqueId, fund);
     interface->consoleAppendText(uniqueId, "Hospital Created with " + QString::number(maxBeds) + " beds");
@@ -41,10 +41,10 @@ void Hospital::updateInterface() {
 int Hospital::request(ItemType what, int qty){
     if (what == ItemType::PatientSick && qty > 0) {
         mutex.lock();
-        if(getNumberSick < qty) {
+        if(getNumberSick() < qty) {
             int totalCost = qty * getCostPerUnit(ItemType::PatientSick);
 
-            getNumberSick -= qty;
+            getNumberSick() -= qty;
             currentBeds -= qty;
             money += totalCost;
             mutex.unlock();

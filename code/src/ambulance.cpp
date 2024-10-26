@@ -20,7 +20,7 @@ Ambulance::Ambulance(int uniqueId, int fund, std::vector<ItemType> resourcesSupp
     interface->updateFund(uniqueId, fund);
 }
 
-int& Ambulance::getNumberPatients(){
+int& Ambulance::getNumberSick(){
     return stocks[ItemType::PatientSick];
 }
 
@@ -45,7 +45,7 @@ void Ambulance::sendPatient(){
     if(sent > 0){
         static int employeeSalary = getEmployeeSalary(EmployeeType::Supplier);
 
-        --getNumberPatients;
+        --getNumberSick();
         money += patientCost;
         money -= employeeSalary;
         ++nbTransfer;

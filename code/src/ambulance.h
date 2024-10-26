@@ -103,7 +103,7 @@ protected:
      * Fonction responsable de l'envoi d'un patient à l'hôpital ou à la clinique.
      * Cette méthode gère les détails logistiques de la transmission d'un patient.
      */
-    int& getNumberPatients();
+    int& getNumberSick();
 
 
     std::vector<ItemType> resourcesSupplied;  // Liste des items que ce fournisseur gère (ressources de l'ambulance)

@@ -36,6 +36,7 @@ signals:
     void sig_updateFund(unsigned int id, unsigned new_fund);
     void sig_updateStock(unsigned int id, std::map<ItemType, int>* stocks);
     void sig_set_link(int from, int to);
+    void sig_windowClosed();
 };
 
 #endif // WINDOWINTERFACE_H

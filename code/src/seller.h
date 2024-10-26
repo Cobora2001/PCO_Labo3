@@ -83,6 +83,12 @@ public:
 
     int getUniqueId() { return uniqueId; }
 
+    /**
+     * @brief setFinished
+     * Indicates that the program has finished and that the seller should stop
+     */
+    void setFinished();
+
 protected:
     /**
      * @brief stocks : Type, Quantité
@@ -90,6 +96,8 @@ protected:
     std::map<ItemType, int> stocks;
     int money;
     int uniqueId;
+    bool finished;  // Indique si l'ambulance a terminé son service
+
 };
 
 #endif // SELLER_H

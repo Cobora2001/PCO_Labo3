@@ -53,7 +53,7 @@ void Clinic::run() {
     }
     interface->consoleAppendText(uniqueId, "[START] Factory routine");
 
-    while (true /*TODO*/) {
+    while (!finished) {
         
         if (verifyResources()) {
             treatPatient();

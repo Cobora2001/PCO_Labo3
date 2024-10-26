@@ -20,8 +20,12 @@ Ambulance::Ambulance(int uniqueId, int fund, std::vector<ItemType> resourcesSupp
     interface->updateFund(uniqueId, fund);
 }
 
+int Ambulance::getNumberPatients(){
+    return stocks[ItemType::PatientSick];
+}
+
 void Ambulance::sendPatient(){
-    if(stocks[ItemType::PatientSick] <= 0){
+    if(getNumberPatients <= 0){
         interface->consoleAppendText(uniqueId, QString("No patient to send"));
         return;
     }
@@ -53,7 +57,7 @@ void Ambulance::sendPatient(){
 void Ambulance::run() {
     interface->consoleAppendText(uniqueId, "[START] Ambulance routine");
 
-    while (!finished) {
+    while (!finished && getNumberPatients() > 0) {
     
         sendPatient();
         

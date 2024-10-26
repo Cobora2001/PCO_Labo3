@@ -90,6 +90,13 @@ public:
      */
     std::vector<ItemType> getResourcesSupplied() const;
 
+    /*
+     * @brief sendPatient
+     * Fonction responsable de l'envoi d'un patient à l'hôpital ou à la clinique.
+     * Cette méthode gère les détails logistiques de la transmission d'un patient.
+     */
+    int getNumberPatients();
+
 protected:
     /**
      * @brief sendPatient

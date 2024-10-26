@@ -20,7 +20,7 @@ Ambulance::Ambulance(int uniqueId, int fund, std::vector<ItemType> resourcesSupp
     interface->updateFund(uniqueId, fund);
 }
 
-int Ambulance::getNumberPatients(){
+int& Ambulance::getNumberPatients(){
     return stocks[ItemType::PatientSick];
 }
 
@@ -37,18 +37,20 @@ void Ambulance::sendPatient(){
         return;
     }
 
-    int patientCost = getCostPerUnit(ItemType::PatientSick);
+    static int patientCost = getCostPerUnit(ItemType::PatientSick);
     int sent = chosenHospital->send(ItemType::PatientSick,
                                     MAX_PATIENTS_PER_TRANSFER,
                                     MAX_PATIENTS_PER_TRANSFER * patientCost);
 
     if(sent > 0){
-        --stocks[ItemType::PatientSick];
+        static int employeeSalary = getEmployeeSalary(EmployeeType::Supplier);
+
+        --getNumberPatients;
         money += patientCost;
-        money -= getEmployeeSalary(EmployeeType::Supplier);
+        money -= employeeSalary;
         ++nbTransfer;
 
-        interface->consoleAppendText(uniqueId, QString("Sent 1 patient to hospital %1").arg(chosenHospital->getUniqueId()));
+        interface->consoleAppendText(uniqueId, QString("Sent " + MAX_PATIENTS_PER_TRANSFER + " patient to hospital " + chosenHospital->getUniqueId()));
     } else {
         interface->consoleAppendText(uniqueId, QString("Failed to send patient to hospital"));
     }

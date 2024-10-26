@@ -18,6 +18,19 @@ Hospital::Hospital(int uniqueId, int fund, int maxBeds)
     }
 }
 
+int& Hospital::getNumberSick() {
+    return stocks[ItemType::PatientSick];
+}
+
+int& Hospital::getNumberHealed() {
+    return stocks[ItemType::PatientHealed];
+}
+
+void Hospital::updateInterface() {
+    interface->updateFund(uniqueId, money);
+    interface->updateStock(uniqueId, &stocks);
+}
+
 int Hospital::request(ItemType what, int qty){
     // TODO 
     return 0;
@@ -32,7 +45,29 @@ void Hospital::transferPatientsFromClinic() {
 }
 
 int Hospital::send(ItemType it, int qty, int bill) {
-    // TODO
+    if(it == ItemType::PatientSick || qty > 0 || qty <= (maxBeds - currentBeds)) {
+        mutex.lock();
+        if (money >= bill) {
+            getNumberSick() += qty;
+            currentBeds += qty;
+            money -= bill;
+            mutex.unlock();
+
+            mutexInterface.lock();
+            updateInterface();
+            mutexInterface.unlock();
+
+            nbHospitalised += qty;
+
+            return qty;
+        }
+        mutex.unlock();
+    }
+
+    mutexInterface.lock();
+    interface->consoleAppendText(uniqueId, "Refused request for " + QString::number(qty) + " " + getItemName(it));
+    mutexInterface.unlock();
+
     return 0;
 }
 
@@ -50,8 +85,11 @@ void Hospital::run()
 
         freeHealedPatient();
 
+        mutexInterface.lock();
         interface->updateFund(uniqueId, money);
         interface->updateStock(uniqueId, &stocks);
+        mutexInterface.unlock();
+
         interface->simulateWork(); // Temps d'attente
     }
 
@@ -63,7 +101,7 @@ int Hospital::getAmountPaidToWorkers() {
 }
 
 int Hospital::getNumberPatients(){
-    return stocks[ItemType::PatientSick] + stocks[ItemType::PatientHealed] + nbFree;
+    return getNumberSick() + getNumberHealed() + nbFree;
 }
 
 std::map<ItemType, int> Hospital::getItemsForSale()

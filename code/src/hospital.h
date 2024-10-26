@@ -90,6 +90,24 @@ private:
      */
     void buyResources();
 
+    /**
+     * @brief getNumberSick
+     * @return Le nombre de patients malades à l'hôpital
+     */
+    int& getNumberSick();
+
+    /**
+     * @brief getNumberHealed
+     * @return Le nombre de patients soignés à l'hôpital
+     */
+    int& getNumberHealed();
+
+    /**
+     * @brief updateInterface
+     * Met à jour l'interface graphique pour refléter les changements dans les stocks et l'argent de l'hôpital.
+     */
+    void updateInterface();
+
     void freeHealedPatient();
 
     std::vector<Seller*> clinics;     // Liste des cliniques liées à l'hôpital, qui renvoient des patients soignés
@@ -102,6 +120,9 @@ private:
     int nbFree; // Nombre de personnes qui sont sorties soignées de l'hôpital.
 
     static IWindowInterface* interface;  // Pointeur statique vers l'interface utilisateur pour les logs et mises à jour visuelles
+
+    PcoMutex mutex; // Mutex pour la synchronisation des threads
+    PcoMutex mutexInterface; // Mutex pour la synchronisation avec l'interface graphique
 };
 
 #endif // HOSPITAL_H

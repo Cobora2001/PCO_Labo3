@@ -76,6 +76,11 @@ protected:
     std::vector<ItemType> resourcesSupplied;  // Liste des items que ce fournisseur gère
     int nbSupplied;  // Nombre total d'items fournis
     static IWindowInterface* interface;  // Interface pour les logs et mises à jour
+
+    PcoMutex mutex;  // Mutex pour la synchronisation des ressources partagées
+    PcoMutex mutexInterface;  // Mutex pour la synchronisation de l'interface utilisateur
+
+    void updateInterface();  // Met à jour l'interface utilisateur pour afficher les informations du fournisseur
 };
 
 

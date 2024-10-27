@@ -43,7 +43,6 @@ int Clinic::request(ItemType what, int qty) {
             money += cost;
             mutex.unlock();
 
-
             mutexInterface.lock();
             interface->consoleAppendText(uniqueId, QString("Sent %1 healed patient(s)").arg(qty));
             updateInterface();
@@ -54,6 +53,10 @@ int Clinic::request(ItemType what, int qty) {
         mutex.unlock();
     }
 
+    mutexInterface.lock();
+    interface->consoleAppendText(uniqueId, "Refused request for " + QString::number(qty) + " " + getItemName(what));
+    mutexInterface.unlock();
+    
     return 0;
 }
 
@@ -181,7 +184,10 @@ void Clinic::run() {
         interface->updateFund(uniqueId, money);
         interface->updateStock(uniqueId, &stocks);
     }
+
+    mutexInterface.lock();
     interface->consoleAppendText(uniqueId, "[STOP] Factory routine");
+    mutexInterface.unlock();
 }
 
 

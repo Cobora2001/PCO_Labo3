@@ -186,7 +186,9 @@ void Hospital::run()
         interface->simulateWork(); // Temps d'attente
     }
 
+    mutexInterface.lock();
     interface->consoleAppendText(uniqueId, "[STOP] Hospital routine");
+    mutexInterface.unlock();
 }
 
 int Hospital::getAmountPaidToWorkers() {

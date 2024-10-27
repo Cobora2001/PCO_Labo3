@@ -34,18 +34,21 @@ void Clinic::updateInterface() {
     interface->updateStock(uniqueId, &stocks);
 }
 
-int Clinic::request(ItemType what, int qty){
+int Clinic::request(ItemType what, int qty) {
     if (what == ItemType::PatientHealed && qty > 0) {
+        int cost = getCostPerUnit(ItemType::PatientHealed) * qty;
         mutex.lock();
         if(stocks[ItemType::PatientHealed] >= qty) {
             stocks[ItemType::PatientHealed] -= qty;
+            money += cost;
             mutex.unlock();
+
 
             mutexInterface.lock();
             interface->consoleAppendText(uniqueId, QString("Sent %1 healed patient(s)").arg(qty));
             updateInterface();
             mutexInterface.unlock();
-            
+
             return qty;
         }
         mutex.unlock();
@@ -66,7 +69,44 @@ void Clinic::treatPatient() {
 }
 
 void Clinic::orderResources() {
-    // TODO 
+    for(auto resource : resourcesNeeded) {
+        mutex.lock();
+        if(stocks[resource] == 0 && money >= getCostPerUnit(resource)) {
+            std::vector<Seller*> suppliersTried;
+            do
+            {
+                Seller* supplier = Seller::chooseRandomSeller(suppliers);
+                int cost = supplier->request(resource, MAX_ITEMS_PER_ORDER);
+                if (cost > 0) {
+                    stocks[resource] += MAX_ITEMS_PER_ORDER;
+                    money -= cost;
+                    mutex.unlock();
+
+                    mutexInterface.lock();
+                    interface->consoleAppendText(uniqueId, "Bought " + QString::number(MAX_ITEMS_PER_ORDER) + " " + getItemName(resource) + " from supplier " + QString::number(supplier->getUniqueId()));
+                    updateInterface();
+                    mutexInterface.unlock();
+                } else {
+                    suppliersTried.push_back(supplier);
+                }
+            } while (stocks[resource] == 0 && suppliersTried.size() < suppliers.size());
+            if(stocks[resource] == 0) {
+                mutex.unlock();
+
+                mutexInterface.lock();
+                interface->consoleAppendText(uniqueId, "No stock of " + getItemName(resource) + " in " + QString::number(MAX_ITEMS_PER_ORDER) + " quantity available from suppliers");
+                mutexInterface.unlock();
+            }
+        } else {
+            mutex.unlock();
+
+            if(stocks[resource] == 0) {
+                mutexInterface.lock();
+                interface->consoleAppendText(uniqueId, "Not enough money to buy " + getItemName(resource) + " from suppliers");
+                mutexInterface.unlock();
+            }
+        }
+    }
 }
 
 void Clinic::run() {

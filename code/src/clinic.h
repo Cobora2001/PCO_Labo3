@@ -7,6 +7,9 @@
 #include "iwindowinterface.h"
 #include "seller.h"
 
+#define MAX_PATIENTS_PER_TREATMENT 1
+#define MAX_ITEMS_PER_ORDER 1
+
 /**
  * @brief La classe Clinic permet l'implémentation d'une clinique et de ses fonctions
  *        de gestion des patients, héritant de la classe Seller.

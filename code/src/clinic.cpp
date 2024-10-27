@@ -73,14 +73,13 @@ void Clinic::orderResources() {
         mutex.lock();
         if(stocks[resource] == 0 && money >= getCostPerUnit(resource)) {
             std::vector<Seller*> suppliersTried;
-            do
-            {
+            do {
                 Seller* supplier = Seller::chooseRandomSeller(suppliers);
                 int cost = supplier->request(resource, MAX_ITEMS_PER_ORDER);
                 if (cost > 0) {
                     stocks[resource] += MAX_ITEMS_PER_ORDER;
                     money -= cost;
-                    mutex.unlock();
+                    mutex.unlock();  // Unlock mutex after updating stocks and money
 
                     mutexInterface.lock();
                     interface->consoleAppendText(uniqueId, "Bought " + QString::number(MAX_ITEMS_PER_ORDER) + " " + getItemName(resource) + " from supplier " + QString::number(supplier->getUniqueId()));
@@ -90,15 +89,16 @@ void Clinic::orderResources() {
                     suppliersTried.push_back(supplier);
                 }
             } while (stocks[resource] == 0 && suppliersTried.size() < suppliers.size());
+
             if(stocks[resource] == 0) {
-                mutex.unlock();
+                mutex.unlock();  // Unlock mutex if no stock was obtained after trying suppliers
 
                 mutexInterface.lock();
                 interface->consoleAppendText(uniqueId, "No stock of " + getItemName(resource) + " in " + QString::number(MAX_ITEMS_PER_ORDER) + " quantity available from suppliers");
                 mutexInterface.unlock();
             }
         } else {
-            mutex.unlock();
+            mutex.unlock();  // Unlock mutex if conditions are not met for resource acquisition
 
             if(stocks[resource] == 0) {
                 mutexInterface.lock();

@@ -98,6 +98,15 @@ private:
 
     static IWindowInterface* interface; // Pointeur statique vers l'interface utilisateur pour les logs et mises à jour visuelles
 
+    PcoMutex mutex;                     // Mutex pour la synchronisation des ressources partagées
+    PcoMutex mutexInterface;            // Mutex pour la synchronisation de l'interface utilisateur
+
+    /**
+     * @brief updateInterface
+     * Met à jour l'interface utilisateur pour afficher les informations de la clinique.
+     */
+    void updateInterface();
+
     /**
      * @brief orderResources
      * Fonction pour acheter des ressources nécessaires au traitement des patients chez les fournisseurs.

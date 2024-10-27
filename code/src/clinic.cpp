@@ -6,7 +6,11 @@
 IWindowInterface* Clinic::interface = nullptr;
 
 Clinic::Clinic(int uniqueId, int fund, std::vector<ItemType> resourcesNeeded)
-    : Seller(fund, uniqueId), nbTreated(0), resourcesNeeded(resourcesNeeded)
+    : Seller(fund, uniqueId),
+    nbTreated(0),
+    resourcesNeeded(resourcesNeeded),
+    mutex(),
+    mutexInterface()
 {
     interface->updateFund(uniqueId, fund);
     interface->consoleAppendText(uniqueId, "Factory created");
@@ -25,8 +29,27 @@ bool Clinic::verifyResources() {
     return true;
 }
 
+void Clinic::updateInterface() {
+    interface->updateFund(uniqueId, money);
+    interface->updateStock(uniqueId, &stocks);
+}
+
 int Clinic::request(ItemType what, int qty){
-    // TODO 
+    if (what == ItemType::PatientHealed && qty > 0) {
+        mutex.lock();
+        if(stocks[ItemType::PatientHealed] >= qty) {
+            stocks[ItemType::PatientHealed] -= qty;
+            mutex.unlock();
+
+            mutexInterface.lock();
+            interface->consoleAppendText(uniqueId, QString("Sent %1 healed patient(s)").arg(qty));
+            updateInterface();
+            mutexInterface.unlock();
+            
+            return qty;
+        }
+        mutex.unlock();
+    }
 
     return 0;
 }

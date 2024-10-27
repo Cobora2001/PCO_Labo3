@@ -58,14 +58,63 @@ int Clinic::request(ItemType what, int qty) {
 }
 
 void Clinic::treatPatient() {
-    // TODO 
+    if(stocks[ItemType::PatientSick] == 0) {
+        int cost = getCostPerUnit(ItemType::PatientSick);
+        mutex.lock();
+        if(money >= cost) {
+            std::vector<Seller*> hospitalsTried;
+            do {
+                Seller* hospital;
+                do {
+                    hospital = Seller::chooseRandomSeller(hospitals);
+                } while (std::find(hospitalsTried.begin(), hospitalsTried.end(), hospital) != hospitalsTried.end());
+                int bill = hospital->request(ItemType::PatientSick, 1);
+                if (bill > 0) {
+                    stocks[ItemType::PatientSick] += 1;
+                    money -= bill;
+                    mutex.unlock();  // Unlock mutex after updating stocks and money
 
-    //Temps simulant un traitement 
+                    mutexInterface.lock();
+                    interface->consoleAppendText(uniqueId, "Bought 1 patient from hospital " + QString::number(hospital->getUniqueId()));
+                    updateInterface();
+                    mutexInterface.unlock();
+                } else {
+                    hospitalsTried.push_back(hospital);
+                }
+            } while (stocks[ItemType::PatientSick] == 0 && hospitalsTried.size() < hospitals.size());
+
+            if(stocks[ItemType::PatientSick] == 0) {
+                mutex.unlock();  // Unlock mutex if no stock was obtained after trying hospitals
+
+                mutexInterface.lock();
+                interface->consoleAppendText(uniqueId, "No patient available from hospitals");
+                mutexInterface.unlock();
+            }
+        } else {
+            mutex.unlock();  // Unlock mutex if not enough money to buy patient from hospitals
+
+            mutexInterface.lock();
+            interface->consoleAppendText(uniqueId, "Not enough money to buy patient from hospitals");
+            mutexInterface.unlock();
+        }
+    }
+
+    //Temps simulant un traitement ou l'attente de l'arrivée d'un patient à l'hôpital pour retenter de traiter une prochaine fois
     interface->simulateWork();
 
-    // TODO 
-    
-    interface->consoleAppendText(uniqueId, "Clinic have healed a new patient");
+    if(stocks[ItemType::PatientSick] >= 1) {
+        ++nbTreated;
+        mutex.lock();
+        stocks[ItemType::PatientSick] -= 1;
+        stocks[ItemType::PatientHealed] += 1;
+        money -= getEmployeeSalary(getEmployeeThatProduces(ItemType::PatientHealed));
+        mutex.unlock();
+
+        mutexInterface.lock();
+        updateInterface();
+        interface->consoleAppendText(uniqueId, "Treated a patient");
+        mutexInterface.unlock();                
+    }
 }
 
 void Clinic::orderResources() {
@@ -74,7 +123,10 @@ void Clinic::orderResources() {
         if(stocks[resource] == 0 && money >= getCostPerUnit(resource)) {
             std::vector<Seller*> suppliersTried;
             do {
-                Seller* supplier = Seller::chooseRandomSeller(suppliers);
+                Seller* supplier;
+                do {
+                    supplier = Seller::chooseRandomSeller(suppliers);
+                } while (std::find(suppliersTried.begin(), suppliersTried.end(), supplier) != suppliersTried.end());
                 int cost = supplier->request(resource, MAX_ITEMS_PER_ORDER);
                 if (cost > 0) {
                     stocks[resource] += MAX_ITEMS_PER_ORDER;

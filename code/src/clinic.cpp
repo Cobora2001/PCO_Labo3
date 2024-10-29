@@ -22,7 +22,7 @@ Clinic::Clinic(int uniqueId, int fund, std::vector<ItemType> resourcesNeeded)
 
 bool Clinic::verifyResources() {
     for (auto item : resourcesNeeded) {
-        if (stocks[item] == 0) {
+        if (stocks[item] <= 0) {
             return false;
         }
     }
@@ -61,95 +61,76 @@ int Clinic::request(ItemType what, int qty) {
 }
 
 void Clinic::treatPatient() {
-    if(stocks[ItemType::PatientSick] == 0) {
-        int cost = getCostPerUnit(ItemType::PatientSick);
-        mutex.lock();
-        if(money >= cost) {
-            std::vector<Seller*> hospitalsTried;
-            do {
-                Seller* hospital;
-                do {
-                    hospital = Seller::chooseRandomSeller(hospitals);
-                } while (std::find(hospitalsTried.begin(), hospitalsTried.end(), hospital) != hospitalsTried.end());
-                int bill = hospital->request(ItemType::PatientSick, 1);
-                if (bill > 0) {
-                    stocks[ItemType::PatientSick] += 1;
-                    money -= bill;
-                    mutex.unlock();  // Unlock mutex after updating stocks and money
-
-                    mutexInterface.lock();
-                    interface->consoleAppendText(uniqueId, "Bought 1 patient from hospital " + QString::number(hospital->getUniqueId()));
-                    updateInterface();
-                    mutexInterface.unlock();
-                } else {
-                    hospitalsTried.push_back(hospital);
-                }
-            } while (stocks[ItemType::PatientSick] == 0 && hospitalsTried.size() < hospitals.size());
-
-            if(stocks[ItemType::PatientSick] == 0) {
-                mutex.unlock();  // Unlock mutex if no stock was obtained after trying hospitals
-
-                mutexInterface.lock();
-                interface->consoleAppendText(uniqueId, "No patient available from hospitals");
-                mutexInterface.unlock();
+    int cost = getTreatmentCost();
+    mutex.lock();
+    if (money < cost) {
+        mutex.unlock();
+        mutexInterface.lock();
+        interface->consoleAppendText(uniqueId, "Not enough money to treat a patient");
+        mutexInterface.unlock();
+        return;
+    } else {
+        money -= cost;
+        for(auto resource : resourcesNeeded) {
+            if(resource != ItemType::PatientSick) {
+                stocks[resource] -= 1;
             }
-        } else {
-            mutex.unlock();  // Unlock mutex if not enough money to buy patient from hospitals
-
-            mutexInterface.lock();
-            interface->consoleAppendText(uniqueId, "Not enough money to buy patient from hospitals");
-            mutexInterface.unlock();
         }
+        mutex.unlock();
     }
 
-    //Temps simulant un traitement ou l'attente de l'arrivée d'un patient à l'hôpital pour retenter de traiter une prochaine fois
+    //Temps simulant un traitement
     interface->simulateWork();
 
-    if(stocks[ItemType::PatientSick] >= 1) {
-        ++nbTreated;
-        mutex.lock();
-        stocks[ItemType::PatientSick] -= 1;
-        stocks[ItemType::PatientHealed] += 1;
-        money -= getEmployeeSalary(getEmployeeThatProduces(ItemType::PatientHealed));
-        mutex.unlock();
+    mutex.lock();
+    ++nbTreated;
+    stocks[ItemType::PatientHealed] += 1;
+    stocks[ItemType::PatientSick] -= 1;
+    mutex.unlock();
 
-        mutexInterface.lock();
-        updateInterface();
-        interface->consoleAppendText(uniqueId, "Treated a patient");
-        mutexInterface.unlock();                
-    }
+    mutexInterface.lock();
+    interface->consoleAppendText(uniqueId, "Treated a patient");
+    updateInterface();
+    mutexInterface.unlock();
 }
 
 void Clinic::orderResources() {
     for(auto resource : resourcesNeeded) {
         mutex.lock();
+
         if(stocks[resource] == 0 && money >= getCostPerUnit(resource)) {
-            std::vector<Seller*> suppliersTried;
+            std::vector<Seller*> sellersTried;
+            std::vector<Seller*> sellers;
+            if(resource == ItemType::PatientSick) {
+                sellers = hospitals;
+            } else {
+                sellers = suppliers;
+            }
             do {
-                Seller* supplier;
+                Seller* seller;
                 do {
-                    supplier = Seller::chooseRandomSeller(suppliers);
-                } while (std::find(suppliersTried.begin(), suppliersTried.end(), supplier) != suppliersTried.end());
-                int cost = supplier->request(resource, MAX_ITEMS_PER_ORDER);
+                    seller = Seller::chooseRandomSeller(sellers);
+                } while (std::find(sellersTried.begin(), sellersTried.end(), seller) != sellersTried.end());
+                int cost = seller->request(resource, MAX_ITEMS_PER_ORDER);
                 if (cost > 0) {
                     stocks[resource] += MAX_ITEMS_PER_ORDER;
                     money -= cost;
                     mutex.unlock();  // Unlock mutex after updating stocks and money
 
                     mutexInterface.lock();
-                    interface->consoleAppendText(uniqueId, "Bought " + QString::number(MAX_ITEMS_PER_ORDER) + " " + getItemName(resource) + " from supplier " + QString::number(supplier->getUniqueId()));
+                    interface->consoleAppendText(uniqueId, "Bought " + QString::number(MAX_ITEMS_PER_ORDER) + " " + getItemName(resource) + " from " + (resource == ItemType::PatientSick ? "hospital" : "supplier") + " " + QString::number(seller->getUniqueId()));
                     updateInterface();
                     mutexInterface.unlock();
                 } else {
-                    suppliersTried.push_back(supplier);
+                    sellersTried.push_back(seller);
                 }
-            } while (stocks[resource] == 0 && suppliersTried.size() < suppliers.size());
+            } while (stocks[resource] == 0 && sellersTried.size() < sellers.size());
 
             if(stocks[resource] == 0) {
-                mutex.unlock();  // Unlock mutex if no stock was obtained after trying suppliers
+                mutex.unlock();  // Unlock mutex if no stock was obtained from any seller
 
                 mutexInterface.lock();
-                interface->consoleAppendText(uniqueId, "No stock of " + getItemName(resource) + " in " + QString::number(MAX_ITEMS_PER_ORDER) + " quantity available from suppliers");
+                interface->consoleAppendText(uniqueId, "No stock of " + getItemName(resource) + " in " + QString::number(MAX_ITEMS_PER_ORDER) + " quantity available from " + (resource == ItemType::PatientSick ? "hospitals" : "suppliers"));
                 mutexInterface.unlock();
             }
         } else {
@@ -157,7 +138,7 @@ void Clinic::orderResources() {
 
             if(stocks[resource] == 0) {
                 mutexInterface.lock();
-                interface->consoleAppendText(uniqueId, "Not enough money to buy " + getItemName(resource) + " from suppliers");
+                interface->consoleAppendText(uniqueId, "Not enough money to buy " + getItemName(resource) + " from " + (resource == ItemType::PatientSick ? "hospitals" : "suppliers"));
                 mutexInterface.unlock();
             }
         }
@@ -204,7 +185,7 @@ void Clinic::setHospitalsAndSuppliers(std::vector<Seller*> hospitals, std::vecto
 }
 
 int Clinic::getTreatmentCost() {
-    return 0;
+    return getCostPerUnit(ItemType::PatientHealed);
 }
 
 int Clinic::getWaitingPatients() {

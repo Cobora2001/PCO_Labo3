@@ -41,7 +41,7 @@ void Hospital::updateInterface() {
 int Hospital::request(ItemType what, int qty){
     if (what == ItemType::PatientSick && qty > 0) {
         mutex.lock();
-        if(getNumberSick() < qty) {
+        if(getNumberSick() >= qty) {
             int totalCost = qty * getCostPerUnit(ItemType::PatientSick);
 
             getNumberSick() -= qty;

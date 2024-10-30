@@ -94,6 +94,21 @@ private:
      */
     void buyResources();
 
+
+    /**
+     * @brief canTransferPatientsFromClinic
+     * @param transferCost Le coût de transfert d'un patient soigné d'une clinique à l'hôpital
+     * @return true si l'hôpital a de la capacité pour recevoir des patients soignés des cliniques
+     */
+    bool canTransferPatientsFromClinic(int transferCost);
+
+    /**
+     * @brief attemptTransferFromClinic
+     * @param clinic La clinique à partir de laquelle les patients soignés doivent être transférés
+     * @return true si le transfert a réussi, false sinon
+     */
+    bool attemptTransferFromClinic(Seller* clinic);
+
     /**
      * @brief getNumberSick
      * @return Le nombre de patients malades à l'hôpital

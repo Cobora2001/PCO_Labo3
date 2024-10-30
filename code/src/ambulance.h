@@ -68,6 +68,10 @@ public:
      */
     int getAmountPaidToWorkers();
 
+    /**
+     * @brief getNumberPatients
+     * @return Le nombre total de patients dans l'ambulance
+     */
     int getNumberPatients();
 
     /**
@@ -89,6 +93,20 @@ public:
      * @return Les ressources fournies par cette ambulance
      */
     std::vector<ItemType> getResourcesSupplied() const;
+
+private:
+
+    /**
+     * @brief canSendPatient
+     * @return true si l'ambulance peut envoyer un patient à l'hôpital ou à la clinique
+     */
+    bool canSendPatient(seller* hospital);
+
+    /**
+     * @brief updateAfterTransfer
+     * Met à jour les stocks et les coûts après un transfert de patient
+     */
+    void updateAfterTransfer(int* patientCost, Seller* chosenHospital);
 
 protected:
     /**

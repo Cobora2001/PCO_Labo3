@@ -24,25 +24,22 @@ int& Ambulance::getNumberSick(){
     return stocks[ItemType::PatientSick];
 }
 
-void Ambulance::sendPatient(){
-    if(getNumberPatients() <= 0){
+bool Ambulance::canSendPatient(seller* hospital){
+    
+    if (getNumberPatients() <= 0) {
         interface->consoleAppendText(uniqueId, QString("No patient to send"));
-        return;
+        return false;
     }
 
-    Seller* chosenHospital = chooseRandomSeller(hospitals);
-
-    if(!chosenHospital){
+    if (!hospital) {
         interface->consoleAppendText(uniqueId, QString("No hospital to send patient"));
-        return;
+        return false;
     }
 
-    static int patientCost = getCostPerUnit(ItemType::PatientSick);
-    int sent = chosenHospital->send(ItemType::PatientSick,
-                                    MAX_PATIENTS_PER_TRANSFER,
-                                    MAX_PATIENTS_PER_TRANSFER * patientCost);
+    return true;
+}
 
-    if(sent > 0){
+void Ambulance::updateAfterTransfer(int* patientCost, seller* chosenHospital){
         static int employeeSalary = getEmployeeSalary(EmployeeType::Supplier);
 
         --getNumberSick();
@@ -53,6 +50,21 @@ void Ambulance::sendPatient(){
         interface->consoleAppendText(uniqueId, QString("Sent %1 patient to hospital %2")
             .arg(MAX_PATIENTS_PER_TRANSFER)
             .arg(chosenHospital->getUniqueId()));
+}
+
+void Ambulance::sendPatient(){
+
+    Seller* chosenHospital = chooseRandomSeller(hospitals);
+
+    if (!canSendPatient(chosenHospital)) return;
+    
+    static int patientCost = getCostPerUnit(ItemType::PatientSick);
+    int sent = chosenHospital->send(ItemType::PatientSick,
+                                    MAX_PATIENTS_PER_TRANSFER,
+                                    MAX_PATIENTS_PER_TRANSFER * patientCost);
+
+    if(sent > 0){
+        updateAfterTransfer(patientCost, chosenHospital);
     } else {
         interface->consoleAppendText(uniqueId, QString("Failed to send patient to hospital"));
     }

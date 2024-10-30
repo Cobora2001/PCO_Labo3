@@ -83,16 +83,56 @@ void Hospital::freeHealedPatient() {
     mutexInterface.unlock();
 }
 
-void Hospital::transferPatientsFromClinic() {
-    int transferCost = getCostPerUnit(ItemType::PatientSick);
-    mutex.lock();
-    if (currentBeds >= maxBeds || money < transferCost) {
+bool Hospital::canTransferPatientsFromClinic(int transferCost) {
+    // vérifier si l'hôpital a de la capacité pour recevoir des patients soignés des cliniques
+    // et si l'hôpital a assez d'argent pour payer le coût de transfert 
+    bool canTransfer = currentBeds < maxBeds && money >= transferCost;
+
+    if(!canTransfer) {
         mutex.unlock();
         mutexInterface.lock();
         interface->consoleAppendText(uniqueId, "No capacity to transfer patients from clinic");
         mutexInterface.unlock();
-        return;
+        return canTransfer
     }
+
+    return canTransfer;
+}
+
+
+bool Hospital::attemptTransferFromClinic(Seller* clinic) {
+    bool clinicAvailable = true;
+    while (clinicAvailable && currentBeds < maxBeds && money >= transferCost) {
+        int cost = clinic->request(ItemType::PatientHealed, 1);
+        if (cost > 0) {
+            static int employeeSalary = getEmployeeSalary(EmployeeType::Nurse);
+            ++getNumberHealed();
+            ++currentBeds;
+            money -= cost;
+            money -= employeeSalary;
+            ++nbHospitalised;
+            ++healedPatientsQueue[NB_DAYS_OF_REST - 1]; // Ajouter un patient avec NB_DAYS_OF_REST jours de repos restants
+
+            mutexInterface.lock();
+            interface->consoleAppendText(uniqueId, QString("Transferred a patient from clinic %1").arg(clinic->getUniqueId()));
+            updateInterface();
+            mutexInterface.unlock();
+        } else {
+            clinicAvailable = false;
+            mutexInterface.lock();
+            interface->consoleAppendText(uniqueId, "Failed to transfer patient from clinic");
+            mutexInterface.unlock();
+        }
+    }
+    return clinicAvailable;
+}
+
+void Hospital::transferPatientsFromClinic() {
+    int transferCost = getCostPerUnit(ItemType::PatientSick);
+
+    mutex.lock();
+    if(!canTransferPatientsFromClinic(transferCost)) return;
+    
 
     std::vector<Seller*> clinicsTried;
     do
@@ -103,33 +143,8 @@ void Hospital::transferPatientsFromClinic() {
         }
         clinicsTried.push_back(chosenClinic);
 
-        bool clinicAvailable = true;
+        attemptTransferFromClinic(chosenClinic);
 
-        do
-        {
-            int cost = chosenClinic->request(ItemType::PatientHealed, 1);
-            if (cost > 0) {
-                static int employeeSalary = getEmployeeSalary(EmployeeType::Nurse);
-                ++getNumberHealed();
-                ++currentBeds;
-                money -= cost;
-                money -= employeeSalary;
-                ++nbHospitalised;
-                ++healedPatientsQueue[NB_DAYS_OF_REST - 1]; // Ajouter un patient avec NB_DAYS_OF_REST jours de repos restants
-
-                mutexInterface.lock();
-                interface->consoleAppendText(uniqueId, QString("Transferred a patient from clinic %1").arg(chosenClinic->getUniqueId()));
-                updateInterface();
-                mutexInterface.unlock();
-            } else {
-                clinicAvailable = false;
-
-                mutexInterface.lock();
-                interface->consoleAppendText(uniqueId, "Failed to transfer patient from clinic");
-                mutexInterface.unlock();
-            }
-        } while (clinicAvailable && currentBeds < maxBeds && money >= transferCost);
-        
     } while (clinicsTried.size() < clinics.size() && currentBeds < maxBeds && money >= transferCost);
     
     mutex.unlock();

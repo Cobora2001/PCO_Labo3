@@ -92,6 +92,7 @@ public:
     static void setInterface(IWindowInterface* windowInterface);
 
 private:
+
     std::vector<Seller*> suppliers;    // Liste des fournisseurs de ressources nécessaires à la clinique
     std::vector<Seller*> hospitals;     // Liste des hôpitaux associés à la clinique
 
@@ -128,6 +129,18 @@ private:
      * @return true si les ressources sont suffisantes, false sinon.
      */
     bool verifyResources();
+
+    /**
+     * @brief canPurchaseResources
+     * @return true si la clinique a suffisamment de fonds pour acheter des ressources, false sinon.
+     */
+    bool canPurchaseResources(ItemType ressources);
+
+    /**
+     * @brief attemptPurchaseResources
+     * @return true si la clinique a réussi à acheter des ressources, false sinon.
+     */
+    bool attemptPurchaseResources(ItemType ressources, seller* supplier);
 };
 
 class Pulmonology : public Clinic {

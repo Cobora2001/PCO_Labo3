@@ -94,51 +94,59 @@ void Clinic::treatPatient() {
     mutexInterface.unlock();
 }
 
+bool Clinic::canPurchaseResources(ItemType resource) {
+    
+    if (stocks[resource] == 0 && money >= getCostPerUnit(resource)) {
+        return true;
+    }
+
+    if (stocks[resource] == 0) {
+        mutexInterface.lock();
+        interface->consoleAppendText(uniqueId, "Not enough money to buy " + getItemName(resource));
+        mutexInterface.unlock();
+    }
+    return false;
+}
+
+bool attemptPurchaseResources(ItemType resource, Seller* supplier) {
+    int cost = supplier->request(resource, MAX_ITEMS_PER_ORDER);
+    if (cost > 0) {
+        stocks[resource] += MAX_ITEMS_PER_ORDER;
+        money -= cost;
+        mutex.unlock(); 
+
+        mutexInterface.lock();
+        interface->consoleAppendText(uniqueId, "Bought " + QString::number(MAX_ITEMS_PER_ORDER) + " " + getItemName(resource) + " from " + (resource == ItemType::PatientSick ? "hospital" : "supplier") + " " + QString::number(seller->getUniqueId()));
+        updateInterface();
+        mutexInterface.unlock();
+
+        return true;
+    }
+    return false;
+}
+
 void Clinic::orderResources() {
     for(auto resource : resourcesNeeded) {
         mutex.lock();
 
-        if(stocks[resource] == 0 && money >= getCostPerUnit(resource)) {
+        if(canPurchaseResources(resource)) {
             std::vector<Seller*> sellersTried;
-            std::vector<Seller*> sellers;
-            if(resource == ItemType::PatientSick) {
-                sellers = hospitals;
-            } else {
-                sellers = suppliers;
-            }
-            do {
+            std::vector<Seller*> sellers = (resource == ItemType::PatientSick) ? hospitals : suppliers;
+
+            while(stocks[resource] == 0 && sellersTried.size() < sellers.size()) {
                 Seller* seller;
                 do {
                     seller = Seller::chooseRandomSeller(sellers);
                 } while (std::find(sellersTried.begin(), sellersTried.end(), seller) != sellersTried.end());
-                int cost = seller->request(resource, MAX_ITEMS_PER_ORDER);
-                if (cost > 0) {
-                    stocks[resource] += MAX_ITEMS_PER_ORDER;
-                    money -= cost;
-                    mutex.unlock();  // Unlock mutex after updating stocks and money
+                
+                if(attemptPurchaseResources(resource, seller)) break;
 
-                    mutexInterface.lock();
-                    interface->consoleAppendText(uniqueId, "Bought " + QString::number(MAX_ITEMS_PER_ORDER) + " " + getItemName(resource) + " from " + (resource == ItemType::PatientSick ? "hospital" : "supplier") + " " + QString::number(seller->getUniqueId()));
-                    updateInterface();
-                    mutexInterface.unlock();
-                } else {
-                    sellersTried.push_back(seller);
-                }
-            } while (stocks[resource] == 0 && sellersTried.size() < sellers.size());
-
-            if(stocks[resource] == 0) {
-                mutex.unlock();  // Unlock mutex if no stock was obtained from any seller
-
-                mutexInterface.lock();
-                interface->consoleAppendText(uniqueId, "No stock of " + getItemName(resource) + " in " + QString::number(MAX_ITEMS_PER_ORDER) + " quantity available from " + (resource == ItemType::PatientSick ? "hospitals" : "suppliers"));
-                mutexInterface.unlock();
+                sellersTried.push_back(seller);
             }
-        } else {
-            mutex.unlock();  // Unlock mutex if conditions are not met for resource acquisition
 
             if(stocks[resource] == 0) {
                 mutexInterface.lock();
-                interface->consoleAppendText(uniqueId, "Not enough money to buy " + getItemName(resource) + " from " + (resource == ItemType::PatientSick ? "hospitals" : "suppliers"));
+                interface->consoleAppendText(uniqueId, "No stock of " + getItemName(resource) + " available from " + (resource == ItemType::PatientSick ? "hospitals" : "suppliers"));
                 mutexInterface.unlock();
             }
         }

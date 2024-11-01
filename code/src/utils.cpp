@@ -2,6 +2,8 @@
 
 
 void Utils::endService() {
+    printf("End of service\n");
+
     // Set finished flag to true for each entity
     for (auto& ambulance : ambulances) {
         ambulance->setFinished();
@@ -14,11 +16,6 @@ void Utils::endService() {
     }
     for (auto& hospital : hospitals) {
         hospital->setFinished();
-    }
-
-    // Wait for all threads to complete their tasks
-    for (auto& thread : threads) {
-        thread->join();  // Blocks until thread completes
     }
 }
 
@@ -223,6 +220,7 @@ void Utils::run() {
     for (Hospital* hospital: hospitals) {
         endFund += hospital->getFund();
         endFund += hospital->getAmountPaidToWorkers();
+        startFund += hospital->getFundingFromHealed();
         endPatient += hospital->getNumberPatients();
     }
 

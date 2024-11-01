@@ -9,7 +9,7 @@
 #include "seller.h"
 
 #define NB_DAYS_OF_REST 5
-#define PRICE_OF_HEALING 60
+#define BENEFIT_OF_HEALING 60
 
 /**
  * @brief The Hospital class
@@ -78,6 +78,12 @@ public:
      * Configure l'interface pour afficher les actions de l'hôpital, comme les transferts de patients.
      */
     static void setInterface(IWindowInterface* windowInterface);
+
+    /*
+        * @brief getFundingFromHealed
+        * @return Le montant total gagné en soignant des patients
+    */
+    int getFundingFromHealed();
 
 private:
     /**

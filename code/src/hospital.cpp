@@ -40,13 +40,13 @@ void Hospital::updateInterface() {
 
 int Hospital::request(ItemType what, int qty){
     if (what == ItemType::PatientSick && qty > 0) {
+        static int patientCost = getCostPerUnit(ItemType::PatientSick);
+        int totalBenefit = qty * patientCost;
         mutex.lock();
         if(getNumberSick() >= qty) {
-            int totalCost = qty * getCostPerUnit(ItemType::PatientSick);
-
             getNumberSick() -= qty;
             currentBeds -= qty;
-            money += totalCost;
+            money += totalBenefit;
             mutex.unlock();
 
             mutexInterface.lock();
@@ -54,7 +54,7 @@ int Hospital::request(ItemType what, int qty){
             updateInterface();
             mutexInterface.unlock();
 
-            return totalCost;
+            return totalBenefit;
         }
         mutex.unlock();
     }
@@ -70,7 +70,7 @@ void Hospital::freeHealedPatient() {
     int nbLetGo = healedPatientsQueue[0];
     nbFree += nbLetGo;
     getNumberHealed() -= nbLetGo;
-    money += nbLetGo * PRICE_OF_HEALING;
+    money += nbLetGo * BENE;
     for(int i = 0; i < NB_DAYS_OF_REST - 1; ++i) {
         healedPatientsQueue[i] = healedPatientsQueue[i+1];
     }
@@ -84,7 +84,8 @@ void Hospital::freeHealedPatient() {
 }
 
 void Hospital::transferPatientsFromClinic() {
-    int transferCost = getCostPerUnit(ItemType::PatientSick);
+    static int employeeSalary = getEmployeeSalary(EmployeeType::Nurse);
+    static int transferCost = getCostPerUnit(ItemType::PatientHealed) + employeeSalary;
     mutex.lock();
     if (currentBeds >= maxBeds || money < transferCost) {
         mutex.unlock();
@@ -109,7 +110,9 @@ void Hospital::transferPatientsFromClinic() {
         {
             int cost = chosenClinic->request(ItemType::PatientHealed, 1);
             if (cost > 0) {
-                static int employeeSalary = getEmployeeSalary(EmployeeType::Nurse);
+                if(cost != getCostPerUnit(ItemType::PatientHealed)) {
+                    printf("Error: cost of healing is not correct\n");
+                }
                 ++getNumberHealed();
                 ++currentBeds;
                 money -= cost;
@@ -137,20 +140,19 @@ void Hospital::transferPatientsFromClinic() {
 
 int Hospital::send(ItemType it, int qty, int bill) {
     if(it == ItemType::PatientSick && qty > 0) {
+        static int employeeSalary = getEmployeeSalary(EmployeeType::Nurse);
+        int totalCost = qty * employeeSalary + bill;
         mutex.lock();
-        if (money >= bill && qty <= (maxBeds - currentBeds)) {
-            static int employeeSalary = getEmployeeSalary(EmployeeType::Nurse);
+        if (money >= totalCost && qty <= (maxBeds - currentBeds)) {
             getNumberSick() += qty;
             currentBeds += qty;
-            money -= bill;
-            money -= qty * employeeSalary;
+            money -= totalCost;
+            nbHospitalised += qty;
             mutex.unlock();
 
             mutexInterface.lock();
             updateInterface();
             mutexInterface.unlock();
-
-            nbHospitalised += qty;
 
             return qty;
         }
@@ -173,18 +175,21 @@ void Hospital::run()
 
     interface->consoleAppendText(uniqueId, "[START] Hospital routine");
 
+    printf("Hospital %d started\n", uniqueId);
+
     while (!finished) {
         transferPatientsFromClinic();
 
         freeHealedPatient();
 
         mutexInterface.lock();
-        interface->updateFund(uniqueId, money);
-        interface->updateStock(uniqueId, &stocks);
+        updateInterface();
         mutexInterface.unlock();
 
         interface->simulateWork(); // Temps d'attente
     }
+
+    printf("Hospital %d has finished\n", uniqueId);
 
     mutexInterface.lock();
     interface->consoleAppendText(uniqueId, "[STOP] Hospital routine");
@@ -214,4 +219,8 @@ void Hospital::setClinics(std::vector<Seller*> clinics){
 
 void Hospital::setInterface(IWindowInterface* windowInterface){
     interface = windowInterface;
+}
+
+int Hospital::getFundingFromHealed() {
+    return nbFree * BENEFIT_OF_HEALING;
 }

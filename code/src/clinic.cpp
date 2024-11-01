@@ -36,11 +36,11 @@ void Clinic::updateInterface() {
 
 int Clinic::request(ItemType what, int qty) {
     if (what == ItemType::PatientHealed && qty > 0) {
-        int cost = getCostPerUnit(ItemType::PatientHealed) * qty;
+        int benefit = getCostPerUnit(ItemType::PatientHealed) * qty;
         mutex.lock();
         if(stocks[ItemType::PatientHealed] >= qty) {
             stocks[ItemType::PatientHealed] -= qty;
-            money += cost;
+            money += benefit;
             mutex.unlock();
 
             mutexInterface.lock();
@@ -48,7 +48,7 @@ int Clinic::request(ItemType what, int qty) {
             updateInterface();
             mutexInterface.unlock();
 
-            return qty;
+            return benefit;
         }
         mutex.unlock();
     }
@@ -152,6 +152,8 @@ void Clinic::run() {
     }
     interface->consoleAppendText(uniqueId, "[START] Factory routine");
 
+    printf("Clinic %d started\n", uniqueId);
+
     while (!finished) {
         
         if (verifyResources()) {
@@ -161,10 +163,9 @@ void Clinic::run() {
         }
        
         interface->simulateWork();
-
-        interface->updateFund(uniqueId, money);
-        interface->updateStock(uniqueId, &stocks);
     }
+
+    printf("Clinic %d has finished\n", uniqueId);
 
     mutexInterface.lock();
     interface->consoleAppendText(uniqueId, "[STOP] Factory routine");

@@ -61,6 +61,8 @@ void Ambulance::sendPatient(){
 void Ambulance::run() {
     interface->consoleAppendText(uniqueId, "[START] Ambulance routine");
 
+    printf("Ambulance %d started\n", uniqueId);
+
     while (!finished && getNumberPatients() > 0) {
     
         sendPatient();
@@ -70,6 +72,8 @@ void Ambulance::run() {
         interface->updateFund(uniqueId, money);
         interface->updateStock(uniqueId, &stocks);
     }
+
+    printf("Ambulance %d finished\n", uniqueId);
 
     interface->consoleAppendText(uniqueId, "[STOP] Ambulance routine");
 }

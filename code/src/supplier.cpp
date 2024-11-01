@@ -49,6 +49,9 @@ void Supplier::updateInterface() {
 
 void Supplier::run() {
     interface->consoleAppendText(uniqueId, "[START] Supplier routine");
+
+    printf("Supplier %d started\n", uniqueId);
+
     while (!finished) {
         ItemType resourceSupplied = getRandomItemFromStock();
         int supplierCost = getEmployeeSalary(getEmployeeThatProduces(resourceSupplied));
@@ -80,6 +83,8 @@ void Supplier::run() {
             mutexInterface.unlock();
         }
     }
+
+    printf("Supplier %d finished\n", uniqueId);
     
     mutexInterface.lock();
     interface->consoleAppendText(uniqueId, "[STOP] Supplier routine");

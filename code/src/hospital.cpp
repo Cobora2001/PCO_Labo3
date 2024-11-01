@@ -70,7 +70,7 @@ void Hospital::freeHealedPatient() {
     int nbLetGo = healedPatientsQueue[0];
     nbFree += nbLetGo;
     getNumberHealed() -= nbLetGo;
-    money += nbLetGo * BENE;
+    money += nbLetGo * BENEFIT_OF_HEALING;
     for(int i = 0; i < NB_DAYS_OF_REST - 1; ++i) {
         healedPatientsQueue[i] = healedPatientsQueue[i+1];
     }

@@ -12,12 +12,16 @@ Clinic::Clinic(int uniqueId, int fund, std::vector<ItemType> resourcesNeeded)
     mutex(),
     mutexInterface()
 {
-    interface->updateFund(uniqueId, fund);
-    interface->consoleAppendText(uniqueId, "Factory created");
-
+    mutex.lock();
     for(const auto& item : resourcesNeeded) {
         stocks[item] = 0;
     }
+    mutex.unlock();
+
+    mutexInterface.lock();
+    updateInterface();
+    interface->consoleAppendText(uniqueId, "Clinic Created");
+    mutexInterface.unlock();
 }
 
 bool Clinic::verifyResources() {
@@ -26,6 +30,16 @@ bool Clinic::verifyResources() {
             return false;
         }
     }
+    mutex.lock();
+    if(money < getTreatmentCost()) {
+        mutex.unlock();
+        mutexInterface.lock();
+        interface->consoleAppendText(uniqueId, "Not enough money to treat a patient");
+        mutexInterface.unlock();
+        return false;
+    }
+    money -= getTreatmentCost();
+    mutex.unlock();
     return true;
 }
 
@@ -35,6 +49,7 @@ void Clinic::updateInterface() {
 }
 
 int Clinic::request(ItemType what, int qty) {
+    printf("Clinic %d requested %d %s\n", uniqueId, qty, getItemName(what).toStdString().c_str());
     if (what == ItemType::PatientHealed && qty > 0) {
         int benefit = getCostPerUnit(ItemType::PatientHealed) * qty;
         mutex.lock();
@@ -61,22 +76,14 @@ int Clinic::request(ItemType what, int qty) {
 }
 
 void Clinic::treatPatient() {
+    printf("Clinic %d treating patient\n", uniqueId);
     int cost = getTreatmentCost();
     mutex.lock();
-    if (money < cost) {
-        mutex.unlock();
-        mutexInterface.lock();
-        interface->consoleAppendText(uniqueId, "Not enough money to treat a patient");
-        mutexInterface.unlock();
-        return;
-    } else {
-        money -= cost;
-        for(auto resource : resourcesNeeded) {
-            if(resource != ItemType::PatientSick) {
-                stocks[resource] -= 1;
-            }
+    for(auto resource : resourcesNeeded) {
+        if(resource != ItemType::PatientSick && resource != ItemType::PatientHealed) {
+            stocks[resource] -= 1;
         }
-        mutex.unlock();
+    mutex.unlock();
     }
 
     //Temps simulant un traitement
@@ -95,53 +102,67 @@ void Clinic::treatPatient() {
 }
 
 void Clinic::orderResources() {
+    printf("Clinic %d ordering resources\n", uniqueId);
     for(auto resource : resourcesNeeded) {
-        mutex.lock();
+        if(stocks[resource] == 0 && resource != ItemType::PatientHealed) {
+            int costExpected = getCostPerUnit(resource) * MAX_ITEMS_PER_ORDER;
+            mutex.lock();
+            if(money < costExpected) {
+                mutex.unlock();
 
-        if(stocks[resource] == 0 && money >= getCostPerUnit(resource)) {
-            std::vector<Seller*> sellersTried;
-            std::vector<Seller*> sellers;
-            if(resource == ItemType::PatientSick) {
-                sellers = hospitals;
-            } else {
-                sellers = suppliers;
-            }
-            do {
-                Seller* seller;
-                do {
-                    seller = Seller::chooseRandomSeller(sellers);
-                } while (std::find(sellersTried.begin(), sellersTried.end(), seller) != sellersTried.end());
-                int cost = seller->request(resource, MAX_ITEMS_PER_ORDER);
-                if (cost > 0) {
-                    stocks[resource] += MAX_ITEMS_PER_ORDER;
-                    money -= cost;
-                    mutex.unlock();  // Unlock mutex after updating stocks and money
-
-                    mutexInterface.lock();
-                    interface->consoleAppendText(uniqueId, "Bought " + QString::number(MAX_ITEMS_PER_ORDER) + " " + getItemName(resource) + " from " + (resource == ItemType::PatientSick ? "hospital" : "supplier") + " " + QString::number(seller->getUniqueId()));
-                    updateInterface();
-                    mutexInterface.unlock();
-                } else {
-                    sellersTried.push_back(seller);
-                }
-            } while (stocks[resource] == 0 && sellersTried.size() < sellers.size());
-
-            if(stocks[resource] == 0) {
-                mutex.unlock();  // Unlock mutex if no stock was obtained from any seller
-
-                mutexInterface.lock();
-                interface->consoleAppendText(uniqueId, "No stock of " + getItemName(resource) + " in " + QString::number(MAX_ITEMS_PER_ORDER) + " quantity available from " + (resource == ItemType::PatientSick ? "hospitals" : "suppliers"));
-                mutexInterface.unlock();
-            }
-        } else {
-            mutex.unlock();  // Unlock mutex if conditions are not met for resource acquisition
-
-            if(stocks[resource] == 0) {
                 mutexInterface.lock();
                 interface->consoleAppendText(uniqueId, "Not enough money to buy " + getItemName(resource) + " from " + (resource == ItemType::PatientSick ? "hospitals" : "suppliers"));
                 mutexInterface.unlock();
+            } else {
+                money -= costExpected;
+                mutex.unlock();
+
+                std::vector<Seller*> sellersTried;
+                std::vector<Seller*> sellers;
+
+                if(resource == ItemType::PatientSick) {
+                    sellers = hospitals;
+                } else {
+                    sellers = suppliers;
+                }
+
+                do {
+                    Seller* seller;
+                    do {
+                        seller = Seller::chooseRandomSeller(sellers);
+                    } while (std::find(sellersTried.begin(), sellersTried.end(), seller) != sellersTried.end());
+
+                    int cost = seller->request(resource, MAX_ITEMS_PER_ORDER);
+
+                    if (cost > 0) {
+                        if(cost != costExpected) {
+                            printf("Error: cost of resource is not correct\n");
+                        }
+
+                        mutex.lock();
+                        stocks[resource] += MAX_ITEMS_PER_ORDER;
+                        mutex.unlock();  // Unlock mutex after updating stocks and money
+
+                        mutexInterface.lock();
+                        interface->consoleAppendText(uniqueId, "Bought " + QString::number(MAX_ITEMS_PER_ORDER) + " " + getItemName(resource) + " from " + (resource == ItemType::PatientSick ? "hospital" : "supplier") + " " + QString::number(seller->getUniqueId()));
+                        updateInterface();
+                        mutexInterface.unlock();
+                    } else {
+                        sellersTried.push_back(seller);
+                    }
+                } while (stocks[resource] == 0 && sellersTried.size() < sellers.size());
+
+                if(stocks[resource] == 0) {
+                    mutex.lock();
+                    money += costExpected;
+                    mutex.unlock();
+
+                    mutexInterface.lock();
+                    interface->consoleAppendText(uniqueId, "No stock of " + getItemName(resource) + " in " + QString::number(MAX_ITEMS_PER_ORDER) + " quantity available from " + (resource == ItemType::PatientSick ? "hospitals" : "suppliers"));
+                    mutexInterface.unlock();
+                }
             }
-        }
+        } 
     }
 }
 
@@ -150,7 +171,10 @@ void Clinic::run() {
         std::cerr << "You have to give to hospitals and suppliers to run a clinic" << std::endl;
         return;
     }
+
+    mutexInterface.lock();
     interface->consoleAppendText(uniqueId, "[START] Factory routine");
+    mutexInterface.unlock();
 
     printf("Clinic %d started\n", uniqueId);
 
@@ -177,16 +201,18 @@ void Clinic::setHospitalsAndSuppliers(std::vector<Seller*> hospitals, std::vecto
     this->hospitals = hospitals;
     this->suppliers = suppliers;
 
+    mutexInterface.lock();
     for (Seller* hospital : hospitals) {
         interface->setLink(uniqueId, hospital->getUniqueId());
     }
     for (Seller* supplier : suppliers) {
         interface->setLink(uniqueId, supplier->getUniqueId());
     }
+    mutexInterface.unlock();
 }
 
 int Clinic::getTreatmentCost() {
-    return getCostPerUnit(ItemType::PatientHealed);
+    return getEmployeeSalary(getEmployeeThatProduces(ItemType::PatientHealed));
 }
 
 int Clinic::getWaitingPatients() {

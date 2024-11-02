@@ -17,7 +17,12 @@ Ambulance::Ambulance(int uniqueId, int fund, std::vector<ItemType> resourcesSupp
         }
     }
 
-    interface->updateFund(uniqueId, fund);
+    updateInterface();
+}
+
+void Ambulance::updateInterface() {
+    interface->updateFund(uniqueId, money);
+    interface->updateStock(uniqueId, &stocks);
 }
 
 int& Ambulance::getNumberSick(){
@@ -69,8 +74,7 @@ void Ambulance::run() {
         
         interface->simulateWork();
 
-        interface->updateFund(uniqueId, money);
-        interface->updateStock(uniqueId, &stocks);
+        updateInterface();
     }
 
     printf("Ambulance %d finished\n", uniqueId);

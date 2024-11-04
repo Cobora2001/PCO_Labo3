@@ -9,40 +9,32 @@ Supplier::Supplier(int uniqueId, int fund, std::vector<ItemType> resourcesSuppli
         stocks[item] = 0;    
     }
 
-    interface->consoleAppendText(uniqueId, QString("Supplier Created"));
-    interface->updateFund(uniqueId, fund);
+    updateWithMessage("Supplier Created");
 }
 
 int Supplier::request(ItemType it, int qty) {
     if (stocks.find(it) != stocks.end()) {
-        mutex.lock();
+        lockMutex();
         if (stocks[it] >= qty) {
             stocks[it] -= qty;
             int cost = getCostPerUnit(it) * qty;
             money += cost;
-            mutex.unlock();
+            unlockMutex();
 
-            mutexInterface.lock();
-            interface->consoleAppendText(uniqueId, QString("Sold %1 %2").arg(qty).arg(getItemName(it)));
-            updateInterface();
-            mutexInterface.unlock();
+            updateWithMessage(QString("Sold %1 %2").arg(qty).arg(getItemName(it)));
 
             return cost;
         }
-        mutex.unlock();
+        unlockMutex();
     }
 
-    mutexInterface.lock();
-    interface->consoleAppendText(uniqueId, QString("Refused request for %1 %2").arg(qty).arg(getItemName(it)));
-    mutexInterface.unlock();
+    interfaceMessage(QString("Refused request for %1 %2").arg(qty).arg(getItemName(it)));
 
     return 0;
 }
 
 void Supplier::run() {
-    interface->consoleAppendText(uniqueId, "[START] Supplier routine");
-
-    printf("Supplier %d started\n", uniqueId);
+    interfaceMessage("[START] Supplier routine");
 
     while (!finished) {
         ItemType resourceSupplied = getRandomItemFromStock();
@@ -50,37 +42,26 @@ void Supplier::run() {
 
         bool hasEnoughMoney = false;
 
-        mutex.lock();
+        lockMutex();
         if (money >= supplierCost) {
             money -= supplierCost;
             hasEnoughMoney = true;
-            mutex.unlock();
-        } else {
-            mutex.unlock();
         }
+        unlockMutex();
 
-
-        /* Temps aléatoire borné qui simule l'attente du travail fini ou d'attente qu'on lui achète des produits*/
-        interface->simulateWork();
+        simulateWork();
 
         if(hasEnoughMoney) {
-            nbSupplied++;
-            mutex.lock();
+            ++nbSupplied;
+            lockMutex();
             ++stocks[resourceSupplied];
-            mutex.unlock();
+            unlockMutex();
 
-            mutexInterface.lock();
-            interface->consoleAppendText(uniqueId, QString("Supplied 1 %1").arg(getItemName(resourceSupplied)));
-            updateInterface();
-            mutexInterface.unlock();
+            updateWithMessage(QString("Supplied 1 %1").arg(getItemName(resourceSupplied)));
         }
     }
 
-    printf("Supplier %d finished\n", uniqueId);
-    
-    mutexInterface.lock();
-    interface->consoleAppendText(uniqueId, "[STOP] Supplier routine");
-    mutexInterface.unlock();
+    interfaceMessage("[STOP] Supplier routine");    
 }
 
 

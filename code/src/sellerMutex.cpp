@@ -20,3 +20,15 @@ void SellerMutex::updateWithMessage(QString message) {
     SellerInterface::interfaceMessage(message);
     mutexInterface.unlock();
 }
+
+void SellerMutex::updateStock() {
+    mutexInterface.lock();
+    SellerInterface::updateStock();
+    mutexInterface.unlock();
+}
+
+void SellerMutex::updateMoney() {
+    mutexInterface.lock();
+    SellerInterface::updateMoney();
+    mutexInterface.unlock();
+}

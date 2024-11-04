@@ -7,8 +7,8 @@ void SellerInterface::setInterface(IWindowInterface *windowInterface) {
 }
 
 void SellerInterface::updateInterface() {
-    interface->updateFund(uniqueId, money);
-    interface->updateStock(uniqueId, &stocks);
+    SellerInterface::updateMoney();
+    SellerInterface::updateStock();
 }
 
 void SellerInterface::interfaceMessage(QString message) {
@@ -17,4 +17,16 @@ void SellerInterface::interfaceMessage(QString message) {
 
 void SellerInterface::simulateWork() {
     interface->simulateWork();
+}
+
+void SellerInterface::updateStock() {
+    interface->updateStock(uniqueId, &stocks);
+}
+
+void SellerInterface::updateMoney() {
+    interface->updateFund(uniqueId, money);
+}
+
+void SellerInterface::setLink(int id) {
+    interface->setLink(uniqueId, id);
 }

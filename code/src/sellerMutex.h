@@ -16,8 +16,6 @@ public:
     SellerMutex(int money, int uniqueId);
 
 protected:
-    PcoMutex mutex;                     // Mutex pour la synchronisation des ressources partagées
-    PcoMutex mutexInterface;            // Mutex pour la synchronisation de l'interface utilisateur
 
     /**
      * @brief updateInterface
@@ -38,7 +36,34 @@ protected:
      * Sends a message to the interface
      */
     void interfaceMessage(QString message) override;
-    
+
+    /**
+     * @brief lockMutex
+     * Locks the mutex
+     */
+    void lockMutex() { mutex.lock(); }
+
+    /**
+     * @brief unlockMutex
+     * Unlocks the mutex
+     */
+    void unlockMutex() { mutex.unlock(); }
+
+    /**
+     * @brief updateStock
+     * Updates the interface with the current stock of the seller
+     */
+    void updateStock() override;
+
+    /**
+     * @brief updateMoney
+     * Updates the interface with the current money of the seller
+     */
+    void updateMoney() override;
+
+private:
+    PcoMutex mutex;                     // Mutex pour la synchronisation des ressources partagées
+    PcoMutex mutexInterface;            // Mutex pour la synchronisation de l'interface utilisateur
 };
 
 #endif // SELLERMUTEX_H

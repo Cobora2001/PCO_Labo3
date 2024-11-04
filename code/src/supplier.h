@@ -82,7 +82,7 @@ public:
     MedicalDeviceSupplier(int uniqueId, int fund)
         : Supplier(uniqueId, fund, {ItemType::Scalpel, ItemType::Thermometer, ItemType::Stethoscope}) {
         // Log de création spécifique à un fournisseur d'outils médicaux
-        interface->consoleAppendText(uniqueId, QString("Medical Tool Supplier Created"));
+        interfaceMessage(QString("Medical Tool Supplier Created"));
     }
 };
 
@@ -97,7 +97,7 @@ public:
     Pharmacy(int uniqueId, int fund)
         : Supplier(uniqueId, fund, {ItemType::Syringe, ItemType::Pill}) {
         // Log de création spécifique à une pharmacie
-        interface->consoleAppendText(uniqueId, QString("Pharmacy Created"));
+        interfaceMessage(QString("Pharmacy Created"));
     }
 };
 

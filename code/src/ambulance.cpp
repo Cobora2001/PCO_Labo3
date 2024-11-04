@@ -5,8 +5,6 @@
 Ambulance::Ambulance(int uniqueId, int fund, std::vector<ItemType> resourcesSupplied, std::map<ItemType, int> initialStocks)
     : SellerInterface(fund, uniqueId), resourcesSupplied(resourcesSupplied), nbTransfer(0) 
 {
-    interface->consoleAppendText(uniqueId, QString("Ambulance Created"));
-
     for (const auto& item : resourcesSupplied) {
         if (initialStocks.find(item) != initialStocks.end()) {
             stocks[item] = initialStocks[item];
@@ -15,6 +13,7 @@ Ambulance::Ambulance(int uniqueId, int fund, std::vector<ItemType> resourcesSupp
         }
     }
 
+    interfaceMessage(QString("Ambulance Created"));
     updateInterface();
 }
 
@@ -24,14 +23,14 @@ int& Ambulance::getNumberSick(){
 
 void Ambulance::sendPatient(){
     if(getNumberPatients() <= 0){
-        interface->consoleAppendText(uniqueId, QString("No patient to send"));
+        interfaceMessage(QString("No patient to send"));
         return;
     }
 
     Seller* chosenHospital = chooseRandomSeller(hospitals);
 
     if(!chosenHospital){
-        interface->consoleAppendText(uniqueId, QString("No hospital to send patient"));
+        interfaceMessage(QString("No hospital to send patient"));
         return;
     }
 
@@ -48,31 +47,27 @@ void Ambulance::sendPatient(){
         money -= employeeSalary;
         ++nbTransfer;
 
-        interface->consoleAppendText(uniqueId, QString("Sent %1 patient to hospital %2")
+        interfaceMessage(QString("Sent %1 patient to hospital %2")
             .arg(MAX_PATIENTS_PER_TRANSFER)
             .arg(chosenHospital->getUniqueId()));
     } else {
-        interface->consoleAppendText(uniqueId, QString("Failed to send patient to hospital"));
+        interfaceMessage(QString("Failed to send patient to hospital"));
     }
 }
 
 void Ambulance::run() {
-    interface->consoleAppendText(uniqueId, "[START] Ambulance routine");
-
-    printf("Ambulance %d started\n", uniqueId);
+    interfaceMessage(QString("[START] Ambulance routine"));
 
     while (!finished && getNumberPatients() > 0) {
     
         sendPatient();
         
-        interface->simulateWork();
+        simulateWork();
 
         updateInterface();
     }
 
-    printf("Ambulance %d finished\n", uniqueId);
-
-    interface->consoleAppendText(uniqueId, "[STOP] Ambulance routine");
+    interfaceMessage(QString("[STOP] Ambulance routine"));
 }
 
 std::map<ItemType, int> Ambulance::getItemsForSale() {
@@ -99,7 +94,7 @@ void Ambulance::setHospitals(std::vector<Seller*> hospitals){
     this->hospitals = hospitals;
 
     for (Seller* hospital : hospitals) {
-        interface->setLink(uniqueId, hospital->getUniqueId());
+        setLink(hospital->getUniqueId());
     }
 }
 

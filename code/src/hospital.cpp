@@ -72,65 +72,37 @@ void Hospital::transferPatientsFromClinic() {
     static int employeeSalary = getEmployeeSalary(EmployeeType::Nurse);
     static int costPerHealed = getCostPerUnit(ItemType::PatientHealed);
     static int transferCost = costPerHealed + employeeSalary;
+
+    int qtyReserved = 0;
+
     lockMutex();
-    if (currentBeds >= maxBeds || money < transferCost) {
-        unlockMutex();
-        interfaceMessage("No capacity to transfer patients from clinic");
-        return;
+    if (currentBeds < maxBeds) {
+        qtyReserved = maxBeds - currentBeds;
+        qtyReserved = qtyReserved / 2 + qtyReserved % 2;
+        currentBeds += qtyReserved;
     }
     unlockMutex();
 
-    std::vector<Seller*> clinicsTried;
-    bool enoughMoney = true;
-    bool enoughBeds = true;
+    if (qtyReserved == 0) {
+        return;
+    }
 
-    while (clinicsTried.size() < clinics.size() && enoughBeds && enoughMoney) {
-        Seller* chosenClinic = Seller::chooseRandomSeller(clinics);
-        if (std::find(clinicsTried.begin(), clinicsTried.end(), chosenClinic) != clinicsTried.end()) {
-            continue;
-        }
-        clinicsTried.push_back(chosenClinic);
+    int qty = buyFromSellers(clinics, ItemType::PatientHealed, qtyReserved, transferCost);
 
-        bool clinicAvailable = true;
+    if (qty > 0) {
+        lockMutex();
+        currentBeds += qty - qtyReserved;
+        nbHospitalised += qty;
+        healedPatientsQueue[NB_DAYS_OF_REST - 1] += qty;
+        unlockMutex();
 
-        while (clinicAvailable && enoughBeds && enoughMoney) {
+        updateWithMessage("Transferred " + QString::number(qty) + " patient" + (qty > 1 ? "s" : "") + " from clinic" + (clinics.size() > 1 ? "s" : ""));
+    } else {
+        lockMutex();
+        currentBeds -= qtyReserved;
+        unlockMutex();
+        interfaceMessage("No healed patient available at clinic(s)");
 
-            lockMutex();
-            if(currentBeds >= maxBeds) {
-                enoughBeds = false;
-                unlockMutex();
-            } else if(money < transferCost) {
-                enoughMoney = false;
-                unlockMutex();
-            } else {
-                money -= transferCost;
-                ++currentBeds;
-                unlockMutex();
-                
-                int cost = chosenClinic->request(ItemType::PatientHealed, 1);
-
-                if (cost > 0) {
-                    if(cost != costPerHealed) {
-                        std::cerr << "Error: cost of healing is not correct" << std::endl;
-                    }
-                    lockMutex();
-                    ++getNumberHealed();
-                    ++nbHospitalised;
-                    ++healedPatientsQueue[NB_DAYS_OF_REST - 1]; // Ajouter un patient avec NB_DAYS_OF_REST jours de repos restants
-                    unlockMutex();
-
-                    updateWithMessage("Transferred a patient from clinic " + QString::number(chosenClinic->getUniqueId()));
-                } else {
-                    clinicAvailable = false;
-                    lockMutex();
-                    money += transferCost;
-                    --currentBeds;
-                    unlockMutex();
-
-                    interfaceMessage("No healed patient available at clinic " + QString::number(chosenClinic->getUniqueId()));
-                }
-            }
-        }
     }
 }
 
@@ -147,14 +119,14 @@ int Hospital::send(ItemType it, int qty, int bill) {
             nbHospitalised += qty;
             unlockMutex();
 
-            updateWithMessage("Received " + QString::number(qty) + " sick patient" + (qty > 1 ? "s" : ""));
+            updateWithMessage("Received " + QString::number(qty) + " sick patient(s)");
 
             return qty;
         }
         unlockMutex();
     }
 
-    interfaceMessage("Refused request for " + QString::number(qty) + " " + getItemName(it));
+    interfaceMessage(QString("Refused request for " + QString::number(qty) + " " + getItemName(it)));
 
     return 0;
 }

@@ -63,8 +63,8 @@ void Clinic::treatPatient() {
         if(resource != ItemType::PatientSick && resource != ItemType::PatientHealed) {
             stocks[resource] -= 1;
         }
-    unlockMutex();
     }
+    unlockMutex();
 
     //Temps simulant un traitement
     simulateWork();
@@ -81,55 +81,14 @@ void Clinic::treatPatient() {
 void Clinic::orderResources() {
     for(auto resource : resourcesNeeded) {
         if(stocks[resource] == 0 && resource != ItemType::PatientHealed) {
-            int costExpected = getCostPerUnit(resource) * MAX_ITEMS_PER_ORDER;
-            lockMutex();
-            if(money < costExpected) {
-                unlockMutex();
+            std::vector<Seller*> sellers = resource == ItemType::PatientSick ? hospitals : suppliers;
 
-                interfaceMessage("Not enough money to buy " + getItemName(resource) + " from " + (resource == ItemType::PatientSick ? "hospitals" : "suppliers"));
+            int qty = buyFromSellers(sellers, resource, MAX_ITEMS_PER_ORDER);
+
+            if(qty > 0) {
+                updateWithMessage("Bought " + QString::number(qty) + " " + getItemName(resource) + " from supplier" + (suppliers.size() > 1 ? "s" : ""));
             } else {
-                money -= costExpected;
-                unlockMutex();
-
-                std::vector<Seller*> sellersTried;
-                std::vector<Seller*> sellers;
-
-                if(resource == ItemType::PatientSick) {
-                    sellers = hospitals;
-                } else {
-                    sellers = suppliers;
-                }
-
-                do {
-                    Seller* seller;
-                    do {
-                        seller = Seller::chooseRandomSeller(sellers);
-                    } while (std::find(sellersTried.begin(), sellersTried.end(), seller) != sellersTried.end());
-
-                    int cost = seller->request(resource, MAX_ITEMS_PER_ORDER);
-
-                    if (cost > 0) {
-                        if(cost != costExpected) {
-                            std::cerr << "Error: cost of resource is not correct" << std::endl;
-                        }
-
-                        lockMutex();
-                        stocks[resource] += MAX_ITEMS_PER_ORDER;
-                        unlockMutex();
-
-                        updateWithMessage("Bought " + QString::number(MAX_ITEMS_PER_ORDER) + " " + getItemName(resource) + " from " + (resource == ItemType::PatientSick ? "hospital" : "supplier") + " " + QString::number(seller->getUniqueId()));
-                    } else {
-                        sellersTried.push_back(seller);
-                    }
-                } while (stocks[resource] == 0 && sellersTried.size() < sellers.size());
-
-                if(stocks[resource] == 0) {
-                    lockMutex();
-                    money += costExpected;
-                    unlockMutex();
-
-                    interfaceMessage("No stock of " + getItemName(resource) + " in " + QString::number(MAX_ITEMS_PER_ORDER) + " quantity available from " + (resource == ItemType::PatientSick ? "hospitals" : "suppliers"));
-                }
+                interfaceMessage("No stock of " + getItemName(resource) + " in " + QString::number(MAX_ITEMS_PER_ORDER) + " quantity available from supplier" + (suppliers.size() > 1 ? "s" : ""));
             }
         } 
     }
@@ -142,8 +101,6 @@ void Clinic::run() {
     }
 
     interfaceMessage("[START] Factory routine");
-
-    printf("Clinic %d started\n", uniqueId);
 
     while (!finished) {
         

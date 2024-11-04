@@ -35,6 +35,8 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/hospital.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ambulance.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sellerInterface.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sellerMutex.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/internal/windowinterface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/internal/main.cpp
 )
@@ -48,6 +50,8 @@ set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/internal/utils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/hospital.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ambulance.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sellerInterface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sellerMutex.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/internal/iwindowinterface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/internal/windowinterface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/internal/fakeinterface.h
@@ -75,6 +79,8 @@ set(SOURCES_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/internal/mainwindow.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/hospital.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ambulance.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sellerInterface.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sellerMutex.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/internal/windowinterface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/tests_main.cpp
 )
@@ -87,6 +93,8 @@ set(HEADERS_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/internal/utils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/hospital.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ambulance.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sellerInterface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sellerMutex.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/internal/mainwindow.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/internal/iwindowinterface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/internal/windowinterface.h

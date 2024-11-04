@@ -61,6 +61,28 @@ protected:
      */
     void updateMoney() override;
 
+    /**
+     * @brief buyFromSeller
+     * @param seller The seller to buy from
+     * @param item The item to buy
+     * @param qty The quantity to buy
+     * @param costExpected The expected cost of the transaction
+     * @return true if the transaction was successful, false otherwise
+     * Buys an item from a seller (we expect that the costExpected was already checked to be less or equal than money, and the money was already locked)
+     */
+    bool buyFromSeller(Seller* seller, ItemType item, int qty, int costExpected);
+
+    /**
+     * @brief buyFromSellers
+     * @param sellers The list of sellers to buy from
+     * @param item The item to buy
+     * @param maxQty The maximum quantity to buy
+     * @param numberPerOrder The number of items to buy per order
+     * @return The total quantity bought
+     * Buys an item from a list of sellers (we expect other conditions to be checked and reserved before calling this function)
+     */
+    int buyFromSellers(std::vector<Seller*> sellers, ItemType item, int maxQty, int costPerOrder = -1, int numberPerOrder = 1);
+
 private:
     PcoMutex mutex;                     // Mutex pour la synchronisation des ressources partagées
     PcoMutex mutexInterface;            // Mutex pour la synchronisation de l'interface utilisateur

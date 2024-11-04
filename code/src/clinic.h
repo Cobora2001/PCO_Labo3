@@ -90,8 +90,6 @@ private:
 
     int nbTreated;                      // Nombre total de patients traités par la clinique
 
-    static IWindowInterface* interface; // Pointeur statique vers l'interface utilisateur pour les logs et mises à jour visuelles
-
     /**
      * @brief orderResources
      * Fonction pour acheter des ressources nécessaires au traitement des patients chez les fournisseurs.

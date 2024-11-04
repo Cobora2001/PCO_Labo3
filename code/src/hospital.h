@@ -3,10 +3,9 @@
 
 #include <vector>
 #include <array>
-#include <pcosynchro/pcomutex.h>
 
 #include "iwindowinterface.h"
-#include "seller.h"
+#include "sellerMutex.h"
 
 #define NB_DAYS_OF_REST 5
 #define BENEFIT_OF_HEALING 60
@@ -16,7 +15,7 @@
  * Gère un hôpital qui reçoit des patients malades des ambulances et des patients soignés des cliniques.
  * Hérite de la classe Seller, car les patients peuvent être "échangés" comme des ressources.
  */
-class Hospital : public Seller 
+class Hospital : public SellerMutex 
 {
 public:
     /**
@@ -72,13 +71,6 @@ public:
      */
     int getAmountPaidToWorkers();
 
-    /**
-     * @brief setInterface
-     * @param windowInterface Pointeur vers l'interface graphique utilisée pour l'affichage des logs et mises à jour
-     * Configure l'interface pour afficher les actions de l'hôpital, comme les transferts de patients.
-     */
-    static void setInterface(IWindowInterface* windowInterface);
-
     /*
         * @brief getFundingFromHealed
         * @return Le montant total gagné en soignant des patients
@@ -112,12 +104,6 @@ private:
      */
     int& getNumberHealed();
 
-    /**
-     * @brief updateInterface
-     * Met à jour l'interface graphique pour refléter les changements dans les stocks et l'argent de l'hôpital.
-     */
-    void updateInterface();
-
     void freeHealedPatient();
 
     std::vector<Seller*> clinics;     // Liste des cliniques liées à l'hôpital, qui renvoient des patients soignés
@@ -128,11 +114,6 @@ private:
     int nbHospitalised; //Nombre de transfert réussi vers l'hôpital (nombre de fois ou un(e) infirmier/infirmière est payé)
 
     int nbFree; // Nombre de personnes qui sont sorties soignées de l'hôpital.
-
-    static IWindowInterface* interface;  // Pointeur statique vers l'interface utilisateur pour les logs et mises à jour visuelles
-
-    PcoMutex mutex; // Mutex pour la synchronisation des threads
-    PcoMutex mutexInterface; // Mutex pour la synchronisation avec l'interface graphique
 
     std::array<int, NB_DAYS_OF_REST> healedPatientsQueue; // Liste du nombre de jours à attendre à l'hôpital pour les patients soignés
 };

@@ -3,16 +3,12 @@
 #include <iostream>
 #include <pcosynchro/pcothread.h>
 
-IWindowInterface* Hospital::interface = nullptr;
-
 Hospital::Hospital(int uniqueId, int fund, int maxBeds)
-    : Seller(fund, uniqueId),
+    : SellerMutex(fund, uniqueId),
       maxBeds(maxBeds),
       currentBeds(0),
       nbHospitalised(0),
       nbFree(0),
-      mutex(),
-      mutexInterface(),
       healedPatientsQueue({0})
 {    
     mutex.lock();
@@ -35,11 +31,6 @@ int& Hospital::getNumberSick() {
 
 int& Hospital::getNumberHealed() {
     return stocks[ItemType::PatientHealed];
-}
-
-void Hospital::updateInterface() {
-    interface->updateFund(uniqueId, money);
-    interface->updateStock(uniqueId, &stocks);
 }
 
 int Hospital::request(ItemType what, int qty){
@@ -263,10 +254,6 @@ void Hospital::setClinics(std::vector<Seller*> clinics){
         interface->setLink(uniqueId, clinic->getUniqueId());
         mutexInterface.unlock();
     }
-}
-
-void Hospital::setInterface(IWindowInterface* windowInterface){
-    interface = windowInterface;
 }
 
 int Hospital::getFundingFromHealed() {

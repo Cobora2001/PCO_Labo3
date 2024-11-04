@@ -21,10 +21,7 @@ int main(int argc, char *argv[])
         windowInterface = new WindowInterface();
     #endif
 
-    Supplier::setInterface(windowInterface);
-    Clinic::setInterface(windowInterface);
-    Hospital::setInterface(windowInterface);
-    Ambulance::setInterface(windowInterface);
+    SellerInterface::setInterface(windowInterface);
 
     Utils utils = Utils(NB_SUPPLIER, NB_CLINICS, NB_HOSPITALS);
     windowInterface->setUtils(&utils);

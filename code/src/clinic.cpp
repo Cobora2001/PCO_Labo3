@@ -3,14 +3,10 @@
 #include <pcosynchro/pcothread.h>
 #include <iostream>
 
-IWindowInterface* Clinic::interface = nullptr;
-
 Clinic::Clinic(int uniqueId, int fund, std::vector<ItemType> resourcesNeeded)
-    : Seller(fund, uniqueId),
+    : SellerMutex(fund, uniqueId),
     nbTreated(0),
-    resourcesNeeded(resourcesNeeded),
-    mutex(),
-    mutexInterface()
+    resourcesNeeded(resourcesNeeded)
 {
     mutex.lock();
     for(const auto& item : resourcesNeeded) {

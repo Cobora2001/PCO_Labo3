@@ -1,6 +1,6 @@
 #include "sellerInterface.h"
 
-IWindowInterface* SellerInteface::interface = nullptr;
+IWindowInterface* SellerInterface::interface = nullptr;
 
 void SellerInterface::setInterface(IWindowInterface *windowInterface) {
     interface = windowInterface;
@@ -13,4 +13,8 @@ void SellerInterface::updateInterface() {
 
 void SellerInterface::interfaceMessage(QString message) {
     interface->consoleAppendText(uniqueId, message);
+}
+
+void SellerInterface::simulateWork() {
+    interface->simulateWork();
 }

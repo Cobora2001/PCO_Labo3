@@ -2,10 +2,8 @@
 #include "costs.h"
 #include <pcosynchro/pcothread.h>
 
-IWindowInterface* Ambulance::interface = nullptr;
-
 Ambulance::Ambulance(int uniqueId, int fund, std::vector<ItemType> resourcesSupplied, std::map<ItemType, int> initialStocks)
-    : Seller(fund, uniqueId), resourcesSupplied(resourcesSupplied), nbTransfer(0) 
+    : SellerInterface(fund, uniqueId), resourcesSupplied(resourcesSupplied), nbTransfer(0) 
 {
     interface->consoleAppendText(uniqueId, QString("Ambulance Created"));
 
@@ -96,11 +94,6 @@ int Ambulance::getAmountPaidToWorkers() {
 int Ambulance::getNumberPatients(){
     return stocks[ItemType::PatientSick];
 }
-
-void Ambulance::setInterface(IWindowInterface *windowInterface) {
-    interface = windowInterface;
-}
-
 
 void Ambulance::setHospitals(std::vector<Seller*> hospitals){
     this->hospitals = hospitals;

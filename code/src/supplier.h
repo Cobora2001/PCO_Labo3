@@ -1,14 +1,12 @@
 #ifndef SUPPLIER_H
 #define SUPPLIER_H
-#include <QTimer>
-#include <pcosynchro/pcomutex.h>
 
-#include "iwindowinterface.h"
+#include <QTimer>
 
 #include "costs.h"
-#include "seller.h"
+#include "sellerMutex.h"
 
-class Supplier : public Seller {
+class Supplier : public SellerMutex {
 public:
     /**
      * @brief Supplier Constructor
@@ -61,12 +59,6 @@ public:
     int getAmountPaidToWorkers();
 
     /**
-     * @brief Configurer l'interface graphique pour l'affichage des informations
-     * @param windowInterface : Pointeur vers l'interface graphique utilisée pour afficher les logs et mises à jour
-     */
-    static void setInterface(IWindowInterface* windowInterface);
-
-    /**
      * @brief Obtenir la liste des ressources fournies par ce fournisseur
      * @return Un vecteur contenant les types d'items fournis
      */
@@ -75,12 +67,6 @@ public:
 protected:
     std::vector<ItemType> resourcesSupplied;  // Liste des items que ce fournisseur gère
     int nbSupplied;  // Nombre total d'items fournis
-    static IWindowInterface* interface;  // Interface pour les logs et mises à jour
-
-    PcoMutex mutex;  // Mutex pour la synchronisation des ressources partagées
-    PcoMutex mutexInterface;  // Mutex pour la synchronisation de l'interface utilisateur
-
-    void updateInterface();  // Met à jour l'interface utilisateur pour afficher les informations du fournisseur
 };
 
 

@@ -6,15 +6,14 @@
 
 // Classe SellerMutex is a subclass of Seller
 
-class SellerInteface extends Seller {
+class SellerInterface : public Seller {
 public:
     /**
      * @brief SellerInteface
      * @param money money money !
+     * @param uniqueId Identifiant unique du vendeur
      */
-    SellerInteface(int money, int uniqueId) {
-        super(money, uniqueId);
-    }
+    SellerInterface(int money, int uniqueId) : Seller(money, uniqueId) {}
 
     /**
      * @brief setInterface
@@ -23,21 +22,27 @@ public:
      */
     static void setInterface(IWindowInterface* windowInterface);
 
+protected:
+    static IWindowInterface* interface; // Pointeur statique vers l'interface utilisateur pour les logs et mises à jour visuelles
+
     /**
      * @brief updateInterface
      * Updates the interface with the current state of the seller
      */
-    void updateInterface();
+    virtual void updateInterface();
 
     /**
      * @brief interfaceMessage
      * @param message
      * Sends a message to the interface
      */
-    void interfaceMessage(QString message);
+    virtual void interfaceMessage(QString message);
 
-protected:
-    static IWindowInterface* interface; // Pointeur statique vers l'interface utilisateur pour les logs et mises à jour visuelles
+    /**
+     * @brief simulateWork
+     * Simulates work for the interface
+     */
+    void simulateWork();
 
 };
 

@@ -1,20 +1,22 @@
 #include "sellerMutex.h"
 
+SellerMutex::SellerMutex(int money, int uniqueId) : SellerInterface(money, uniqueId), mutex(), mutexInterface() {}
+
 void SellerMutex::updateInterface() {
     mutexInterface.lock();
-    super.updateInterface();
+    SellerInterface::updateInterface();
     mutexInterface.unlock();
 }
 
 void SellerMutex::interfaceMessage(QString message) {
     mutexInterface.lock();
-    super.interfaceMessage(message);
+    SellerInterface::interfaceMessage(message);
     mutexInterface.unlock();
 }
 
 void SellerMutex::updateWithMessage(QString message) {
     mutexInterface.lock();
-    super.updateInterface();
-    super.interfaceMessage(message);
+    SellerInterface::updateInterface();
+    SellerInterface::interfaceMessage(message);
     mutexInterface.unlock();
 }

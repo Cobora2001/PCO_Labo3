@@ -2,10 +2,8 @@
 #include "costs.h"
 #include <pcosynchro/pcothread.h>
 
-IWindowInterface* Supplier::interface = nullptr;
-
 Supplier::Supplier(int uniqueId, int fund, std::vector<ItemType> resourcesSupplied)
-    : Seller(fund, uniqueId), resourcesSupplied(resourcesSupplied), nbSupplied(0) 
+    : SellerMutex(fund, uniqueId), resourcesSupplied(resourcesSupplied), nbSupplied(0) 
 {
     for (const auto& item : resourcesSupplied) {    
         stocks[item] = 0;    
@@ -14,7 +12,6 @@ Supplier::Supplier(int uniqueId, int fund, std::vector<ItemType> resourcesSuppli
     interface->consoleAppendText(uniqueId, QString("Supplier Created"));
     interface->updateFund(uniqueId, fund);
 }
-
 
 int Supplier::request(ItemType it, int qty) {
     if (stocks.find(it) != stocks.end()) {
@@ -40,11 +37,6 @@ int Supplier::request(ItemType it, int qty) {
     mutexInterface.unlock();
 
     return 0;
-}
-
-void Supplier::updateInterface() {
-    interface->updateFund(uniqueId, money);
-    interface->updateStock(uniqueId, &stocks);
 }
 
 void Supplier::run() {
@@ -106,10 +98,6 @@ int Supplier::getMaterialCost() {
 
 int Supplier::getAmountPaidToWorkers() {
     return nbSupplied * getEmployeeSalary(EmployeeType::Supplier);
-}
-
-void Supplier::setInterface(IWindowInterface *windowInterface) {
-    interface = windowInterface;
 }
 
 std::vector<ItemType> Supplier::getResourcesSupplied() const

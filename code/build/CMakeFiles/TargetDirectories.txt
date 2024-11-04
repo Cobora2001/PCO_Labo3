@@ -1,6 +1,0 @@
-/home/reds/Desktop/labo3/code/build/CMakeFiles/pco_hospital.dir
-/home/reds/Desktop/labo3/code/build/CMakeFiles/pco_hospital_tests.dir
-/home/reds/Desktop/labo3/code/build/CMakeFiles/edit_cache.dir
-/home/reds/Desktop/labo3/code/build/CMakeFiles/rebuild_cache.dir
-/home/reds/Desktop/labo3/code/build/CMakeFiles/pco_hospital_autogen.dir
-/home/reds/Desktop/labo3/code/build/CMakeFiles/pco_hospital_tests_autogen.dir

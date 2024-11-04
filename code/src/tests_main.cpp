@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include "sellerInterface.h"
 #include "supplier.h"
 #include "ambulance.h"
 #include "iwindowinterface.h"
@@ -43,7 +44,7 @@ TEST(SellerTest, TestHospitals) {
     std::atomic<int> totalGained = 0;
 
     IWindowInterface* windowInterface = new FakeInterface();
-    Hospital::setInterface(windowInterface);
+    SellerInterface::setInterface(windowInterface);
 
     Hospital hospital(uniqueId, initialFund, maxBeds);
 

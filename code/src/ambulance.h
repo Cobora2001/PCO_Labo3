@@ -4,9 +4,8 @@
 #include <QTimer>
 #include <pcosynchro/pcomutex.h>
 
-#include "iwindowinterface.h"
 #include "costs.h"
-#include "seller.h"
+#include "sellerInterface.h"
 
 #define MAX_PATIENTS_PER_TRANSFER 1
 
@@ -15,7 +14,7 @@
  *        et de gérer les ressources nécessaires à leur traitement.
  *        Hérite de la classe Seller pour gérer le trading de patients.
  */
-class Ambulance : public Seller {
+class Ambulance : public SellerInterface {
 public:
     /**
      * @brief Constructeur de la classe Ambulance
@@ -78,13 +77,6 @@ public:
     void setHospitals(std::vector<Seller*> hospitals);
 
     /**
-     * @brief setInterface
-     * @param windowInterface Pointeur vers l'interface graphique utilisée pour afficher les logs et mises à jour
-     * Configure l'interface pour afficher les actions de l'ambulance.
-     */
-    static void setInterface(IWindowInterface* windowInterface);
-
-    /**
      * @brief getResourcesSupplied
      * @return Les ressources fournies par cette ambulance
      */
@@ -108,10 +100,7 @@ protected:
 
     std::vector<ItemType> resourcesSupplied;  // Liste des items que ce fournisseur gère (ressources de l'ambulance)
     int nbTransfer;  // Nombre total d'items (patients) transférés par l'ambulance
-    static IWindowInterface* interface;  // Interface pour les logs et mises à jour
     std::vector<Seller*> hospitals;  // Liste des hôpitaux associés à cette ambulance
-
-    void updateInterface();
 };
 
 #endif // AMBULANCE_H

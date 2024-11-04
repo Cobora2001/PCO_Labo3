@@ -3,30 +3,23 @@
 #include <iostream>
 #include <pcosynchro/pcothread.h>
 
-IWindowInterface* Hospital::interface = nullptr;
-
 Hospital::Hospital(int uniqueId, int fund, int maxBeds)
-    : Seller(fund, uniqueId),
+    : SellerMutex(fund, uniqueId),
       maxBeds(maxBeds),
       currentBeds(0),
       nbHospitalised(0),
       nbFree(0),
-      mutex(),
-      mutexInterface(),
       healedPatientsQueue({0})
 {    
-    mutex.lock();
+    lockMutex();
     std::vector<ItemType> initialStocks = { ItemType::PatientHealed, ItemType::PatientSick };
 
     for(const auto& item : initialStocks) {
         stocks[item] = 0;
     }
-    mutex.unlock();
+    unlockMutex();
 
-    mutexInterface.lock();
-    updateInterface();
-    interface->consoleAppendText(uniqueId, "Hospital Created with " + QString::number(maxBeds) + " beds");
-    mutexInterface.unlock();
+    updateWithMessage("Hospital Created with " + QString::number(maxBeds) + " beds");
 }
 
 int& Hospital::getNumberSick() {
@@ -37,42 +30,30 @@ int& Hospital::getNumberHealed() {
     return stocks[ItemType::PatientHealed];
 }
 
-void Hospital::updateInterface() {
-    interface->updateFund(uniqueId, money);
-    interface->updateStock(uniqueId, &stocks);
-}
-
 int Hospital::request(ItemType what, int qty){
-    printf("Hospital %d got requested %d %s\n", uniqueId, qty, getItemName(what).toStdString().c_str());
     if (what == ItemType::PatientSick && qty > 0) {
         static int patientCost = getCostPerUnit(ItemType::PatientSick);
         int totalBenefit = qty * patientCost;
-        mutex.lock();
+        lockMutex();
         if(getNumberSick() >= qty) {
             getNumberSick() -= qty;
             currentBeds -= qty;
             money += totalBenefit;
-            mutex.unlock();
+            unlockMutex();
 
-            mutexInterface.lock();
-            interface->consoleAppendText(uniqueId, QString("Provided " + QString::number(qty) + " sick patient" + (qty > 1 ? "s" : "")));
-            updateInterface();
-            mutexInterface.unlock();
+            updateWithMessage("Provided " + QString::number(qty) + " sick patient" + (qty > 1 ? "s" : ""));
 
             return totalBenefit;
         }
-        mutex.unlock();
+        unlockMutex();
     }
     
-    mutexInterface.lock();
-    interface->consoleAppendText(uniqueId, "Refused request for " + QString::number(qty) + " " + getItemName(what));
-    mutexInterface.unlock();
+    interfaceMessage("Refused request for " + QString::number(qty) + " " + getItemName(what));
     return 0;
 }
 
 void Hospital::freeHealedPatient() {
-    printf("Hospital %d freeing healed patients\n", uniqueId);
-    mutex.lock();
+    lockMutex();
     int nbLetGo = healedPatientsQueue[0];
     nbFree += nbLetGo;
     getNumberHealed() -= nbLetGo;
@@ -82,30 +63,22 @@ void Hospital::freeHealedPatient() {
         healedPatientsQueue[i] = healedPatientsQueue[i+1];
     }
     healedPatientsQueue[NB_DAYS_OF_REST - 1] = 0;
-    mutex.unlock();
+    unlockMutex();
 
-    printf("Hospital %d freed %d healed patients\n", uniqueId, nbLetGo);
-
-    mutexInterface.lock();
-    interface->consoleAppendText(uniqueId, "Let go " + QString::number(nbLetGo) + " healed patient" + nbLetGo > 1 ? "s" : "");
-    updateInterface();
-    mutexInterface.unlock();
+    updateWithMessage("Let go " + QString::number(nbLetGo) + " healed patient" + (nbLetGo > 1 ? "s" : ""));
 }
 
 void Hospital::transferPatientsFromClinic() {
-    printf("Hospital %d transferring patients from clinic\n", uniqueId);
     static int employeeSalary = getEmployeeSalary(EmployeeType::Nurse);
     static int costPerHealed = getCostPerUnit(ItemType::PatientHealed);
     static int transferCost = costPerHealed + employeeSalary;
-    mutex.lock();
+    lockMutex();
     if (currentBeds >= maxBeds || money < transferCost) {
-        mutex.unlock();
-        mutexInterface.lock();
-        interface->consoleAppendText(uniqueId, "No capacity to transfer patients from clinic");
-        mutexInterface.unlock();
+        unlockMutex();
+        interfaceMessage("No capacity to transfer patients from clinic");
         return;
     }
-    mutex.unlock();
+    unlockMutex();
 
     std::vector<Seller*> clinicsTried;
     bool enoughMoney = true;
@@ -122,44 +95,39 @@ void Hospital::transferPatientsFromClinic() {
 
         while (clinicAvailable && enoughBeds && enoughMoney) {
 
-            mutex.lock();
+            lockMutex();
             if(currentBeds >= maxBeds) {
                 enoughBeds = false;
-                mutex.unlock();
+                unlockMutex();
             } else if(money < transferCost) {
                 enoughMoney = false;
-                mutex.unlock();
+                unlockMutex();
             } else {
                 money -= transferCost;
                 ++currentBeds;
-                mutex.unlock();
+                unlockMutex();
                 
                 int cost = chosenClinic->request(ItemType::PatientHealed, 1);
 
                 if (cost > 0) {
                     if(cost != costPerHealed) {
-                        printf("Error: cost of healing is not correct\n");
+                        std::cerr << "Error: cost of healing is not correct" << std::endl;
                     }
-                    mutex.lock();
+                    lockMutex();
                     ++getNumberHealed();
                     ++nbHospitalised;
                     ++healedPatientsQueue[NB_DAYS_OF_REST - 1]; // Ajouter un patient avec NB_DAYS_OF_REST jours de repos restants
-                    mutex.unlock();
+                    unlockMutex();
 
-                    mutexInterface.lock();
-                    interface->consoleAppendText(uniqueId, QString("Transferred a patient from clinic %1").arg(chosenClinic->getUniqueId()));
-                    updateInterface();
-                    mutexInterface.unlock();
+                    updateWithMessage("Transferred a patient from clinic " + QString::number(chosenClinic->getUniqueId()));
                 } else {
                     clinicAvailable = false;
-                    mutex.lock();
+                    lockMutex();
                     money += transferCost;
                     --currentBeds;
-                    mutex.unlock();
+                    unlockMutex();
 
-                    mutexInterface.lock();
-                    interface->consoleAppendText(uniqueId, "Failed to transfer patient from clinic");
-                    mutexInterface.unlock();
+                    interfaceMessage("No healed patient available at clinic " + QString::number(chosenClinic->getUniqueId()));
                 }
             }
         }
@@ -167,43 +135,26 @@ void Hospital::transferPatientsFromClinic() {
 }
 
 int Hospital::send(ItemType it, int qty, int bill) {
-    printf("Hospital %d received request %d %s\n", uniqueId, qty, getItemName(it).toStdString().c_str());
     if(it == ItemType::PatientSick && qty > 0) {
-        printf("Hospital %d received received valid request for %d sick patients\n", uniqueId, qty);
         static int employeeSalary = getEmployeeSalary(EmployeeType::Nurse);
         int totalCost = qty * employeeSalary + bill;
-        mutex.lock();
+        lockMutex();
         if (money >= totalCost && qty <= (maxBeds - currentBeds)) {
-
-            printf("Hospital %d accepted %d sick patients\n", uniqueId, qty);
 
             getNumberSick() += qty;
             currentBeds += qty;
             money -= totalCost;
             nbHospitalised += qty;
-            mutex.unlock();
+            unlockMutex();
 
-            mutexInterface.lock();
-            interface->consoleAppendText(uniqueId, "Received " + QString::number(qty) + " sick patient" + (qty > 1 ? "s" : ""));
-            updateInterface();
-            mutexInterface.unlock();
+            updateWithMessage("Received " + QString::number(qty) + " sick patient" + (qty > 1 ? "s" : ""));
 
             return qty;
         }
-        printf("Hospital %d refused %d sick patients because ", uniqueId, qty);
-        if (money < totalCost) {
-            printf("not enough money\n");
-        } else {
-            printf("not enough beds\n");
-        }
-        mutex.unlock();
+        unlockMutex();
     }
 
-    printf("Hospital %d refused %d %s\n", uniqueId, qty, getItemName(it).toStdString().c_str());
-
-    mutexInterface.lock();
-    interface->consoleAppendText(uniqueId, "Refused request for " + QString::number(qty) + " " + getItemName(it));
-    mutexInterface.unlock();
+    interfaceMessage("Refused request for " + QString::number(qty) + " " + getItemName(it));
 
     return 0;
 }
@@ -215,31 +166,19 @@ void Hospital::run()
         return;
     }
 
-    mutexInterface.lock();
-    interface->consoleAppendText(uniqueId, "[START] Hospital routine");
-    mutexInterface.unlock();
-
-    printf("Hospital %d started\n", uniqueId);
+    interfaceMessage("[START] Hospital routine");
 
     while (!finished) {
         transferPatientsFromClinic();
 
         freeHealedPatient();
 
-        printf("Hospital %d running\n", uniqueId);
-
-        mutexInterface.lock();
         updateInterface();
-        mutexInterface.unlock();
 
-        interface->simulateWork(); // Temps d'attente
+        simulateWork();
     }
 
-    printf("Hospital %d has finished\n", uniqueId);
-
-    mutexInterface.lock();
-    interface->consoleAppendText(uniqueId, "[STOP] Hospital routine");
-    mutexInterface.unlock();
+    interfaceMessage("[STOP] Hospital routine");
 }
 
 int Hospital::getAmountPaidToWorkers() {
@@ -259,14 +198,8 @@ void Hospital::setClinics(std::vector<Seller*> clinics){
     this->clinics = clinics;
 
     for (Seller* clinic : clinics) {
-        mutexInterface.lock();
-        interface->setLink(uniqueId, clinic->getUniqueId());
-        mutexInterface.unlock();
+        setLink(clinic->getUniqueId());
     }
-}
-
-void Hospital::setInterface(IWindowInterface* windowInterface){
-    interface = windowInterface;
 }
 
 int Hospital::getFundingFromHealed() {

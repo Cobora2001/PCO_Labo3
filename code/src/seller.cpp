@@ -73,4 +73,3 @@ int getEmployeeSalary(EmployeeType employee) {
 void Seller::setFinished() {
     finished = true;
 }
-

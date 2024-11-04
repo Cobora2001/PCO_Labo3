@@ -37,7 +37,7 @@ void Supplier::run() {
     interfaceMessage("[START] Supplier routine");
 
     while (!finished) {
-        ItemType resourceSupplied = getRandomItemFromStock();
+        ItemType resourceSupplied = chooseAdequateItem();
         int supplierCost = getEmployeeSalary(getEmployeeThatProduces(resourceSupplied));
 
         bool hasEnoughMoney = false;
@@ -88,4 +88,23 @@ std::vector<ItemType> Supplier::getResourcesSupplied() const
 
 int Supplier::send(ItemType it, int qty, int bill){
     return 0;
+}
+
+ItemType Supplier::chooseAdequateItem() {
+    if (stocks.empty()) {
+        throw std::runtime_error("Stock is empty.");
+    }
+
+    int minQuantity = std::numeric_limits<int>::max();
+    ItemType leastPresentItem = ItemType::Nothing;
+
+    // Parcours des stocks pour trouver les items avec la plus petite quantité
+    for (const auto& item : stocks) {
+        if (leastPresentItem == ItemType::Nothing || item.second < minQuantity) {
+            minQuantity = item.second;
+            leastPresentItem = item.first;
+        } 
+    }
+
+    return leastPresentItem;
 }

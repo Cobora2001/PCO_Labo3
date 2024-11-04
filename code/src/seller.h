@@ -96,7 +96,7 @@ protected:
     std::map<ItemType, int> stocks;
     int money;
     int uniqueId;
-    bool finished;  // Indique si l'ambulance a terminé son service
+    bool finished;
 
 };
 

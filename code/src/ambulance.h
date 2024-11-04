@@ -8,6 +8,8 @@
 #include "costs.h"
 #include "seller.h"
 
+#define MAX_PATIENTS_PER_TRANSFER 1
+
 /**
  * @brief La classe Ambulance représente une ambulance capable de transporter des patients
  *        et de gérer les ressources nécessaires à leur traitement.
@@ -96,10 +98,20 @@ protected:
      */
     void sendPatient();
 
+    /*
+     * @brief sendPatient
+     * Fonction responsable de l'envoi d'un patient à l'hôpital ou à la clinique.
+     * Cette méthode gère les détails logistiques de la transmission d'un patient.
+     */
+    int& getNumberSick();
+
+
     std::vector<ItemType> resourcesSupplied;  // Liste des items que ce fournisseur gère (ressources de l'ambulance)
     int nbTransfer;  // Nombre total d'items (patients) transférés par l'ambulance
     static IWindowInterface* interface;  // Interface pour les logs et mises à jour
     std::vector<Seller*> hospitals;  // Liste des hôpitaux associés à cette ambulance
+
+    void updateInterface();
 };
 
 #endif // AMBULANCE_H

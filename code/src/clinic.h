@@ -7,6 +7,9 @@
 #include "iwindowinterface.h"
 #include "seller.h"
 
+#define MAX_PATIENTS_PER_TREATMENT 1
+#define MAX_ITEMS_PER_ORDER 1
+
 /**
  * @brief La classe Clinic permet l'implémentation d'une clinique et de ses fonctions
  *        de gestion des patients, héritant de la classe Seller.
@@ -97,6 +100,15 @@ private:
     int nbTreated;                      // Nombre total de patients traités par la clinique
 
     static IWindowInterface* interface; // Pointeur statique vers l'interface utilisateur pour les logs et mises à jour visuelles
+
+    PcoMutex mutex;                     // Mutex pour la synchronisation des ressources partagées
+    PcoMutex mutexInterface;            // Mutex pour la synchronisation de l'interface utilisateur
+
+    /**
+     * @brief updateInterface
+     * Met à jour l'interface utilisateur pour afficher les informations de la clinique.
+     */
+    void updateInterface();
 
     /**
      * @brief orderResources

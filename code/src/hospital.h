@@ -2,10 +2,14 @@
 #define HOSPITAL_H
 
 #include <vector>
+#include <array>
 #include <pcosynchro/pcomutex.h>
 
 #include "iwindowinterface.h"
 #include "seller.h"
+
+#define NB_DAYS_OF_REST 5
+#define BENEFIT_OF_HEALING 60
 
 /**
  * @brief The Hospital class
@@ -75,6 +79,12 @@ public:
      */
     static void setInterface(IWindowInterface* windowInterface);
 
+    /*
+        * @brief getFundingFromHealed
+        * @return Le montant total gagné en soignant des patients
+    */
+    int getFundingFromHealed();
+
 private:
     /**
      * @brief transferPatientsFromClinic
@@ -90,6 +100,24 @@ private:
      */
     void buyResources();
 
+    /**
+     * @brief getNumberSick
+     * @return Le nombre de patients malades à l'hôpital
+     */
+    int& getNumberSick();
+
+    /**
+     * @brief getNumberHealed
+     * @return Le nombre de patients soignés à l'hôpital
+     */
+    int& getNumberHealed();
+
+    /**
+     * @brief updateInterface
+     * Met à jour l'interface graphique pour refléter les changements dans les stocks et l'argent de l'hôpital.
+     */
+    void updateInterface();
+
     void freeHealedPatient();
 
     std::vector<Seller*> clinics;     // Liste des cliniques liées à l'hôpital, qui renvoient des patients soignés
@@ -102,6 +130,11 @@ private:
     int nbFree; // Nombre de personnes qui sont sorties soignées de l'hôpital.
 
     static IWindowInterface* interface;  // Pointeur statique vers l'interface utilisateur pour les logs et mises à jour visuelles
+
+    PcoMutex mutex; // Mutex pour la synchronisation des threads
+    PcoMutex mutexInterface; // Mutex pour la synchronisation avec l'interface graphique
+
+    std::array<int, NB_DAYS_OF_REST> healedPatientsQueue; // Liste du nombre de jours à attendre à l'hôpital pour les patients soignés
 };
 
 #endif // HOSPITAL_H

@@ -17,25 +17,67 @@ Ambulance::Ambulance(int uniqueId, int fund, std::vector<ItemType> resourcesSupp
         }
     }
 
-    interface->updateFund(uniqueId, fund);
+    updateInterface();
+}
+
+void Ambulance::updateInterface() {
+    interface->updateFund(uniqueId, money);
+    interface->updateStock(uniqueId, &stocks);
+}
+
+int& Ambulance::getNumberSick(){
+    return stocks[ItemType::PatientSick];
 }
 
 void Ambulance::sendPatient(){
-    // TODO
+    if(getNumberPatients() <= 0){
+        interface->consoleAppendText(uniqueId, QString("No patient to send"));
+        return;
+    }
+
+    Seller* chosenHospital = chooseRandomSeller(hospitals);
+
+    if(!chosenHospital){
+        interface->consoleAppendText(uniqueId, QString("No hospital to send patient"));
+        return;
+    }
+
+    static int patientCost = getCostPerUnit(ItemType::PatientSick);
+    int sent = chosenHospital->send(ItemType::PatientSick,
+                                    MAX_PATIENTS_PER_TRANSFER,
+                                    MAX_PATIENTS_PER_TRANSFER * patientCost);
+
+    if(sent > 0){
+        static int employeeSalary = getEmployeeSalary(EmployeeType::Supplier);
+
+        --getNumberSick();
+        money += patientCost;
+        money -= employeeSalary;
+        ++nbTransfer;
+
+        interface->consoleAppendText(uniqueId, QString("Sent %1 patient to hospital %2")
+            .arg(MAX_PATIENTS_PER_TRANSFER)
+            .arg(chosenHospital->getUniqueId()));
+    } else {
+        interface->consoleAppendText(uniqueId, QString("Failed to send patient to hospital"));
+    }
 }
 
 void Ambulance::run() {
     interface->consoleAppendText(uniqueId, "[START] Ambulance routine");
 
-    while (!finished) {
+    printf("Ambulance %d started\n", uniqueId);
+
+    while (!finished && getNumberPatients() > 0) {
     
         sendPatient();
         
         interface->simulateWork();
 
-        interface->updateFund(uniqueId, money);
-        interface->updateStock(uniqueId, &stocks);
+        updateInterface();
     }
+
+    printf("Ambulance %d finished\n", uniqueId);
 
     interface->consoleAppendText(uniqueId, "[STOP] Ambulance routine");
 }

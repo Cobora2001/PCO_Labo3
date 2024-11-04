@@ -18,10 +18,7 @@ Clinic::Clinic(int uniqueId, int fund, std::vector<ItemType> resourcesNeeded)
     }
     mutex.unlock();
 
-    mutexInterface.lock();
-    updateInterface();
-    interface->consoleAppendText(uniqueId, "Clinic Created");
-    mutexInterface.unlock();
+    updateWithMessage("Clinic Created");
 }
 
 bool Clinic::verifyResources() {
@@ -41,11 +38,6 @@ bool Clinic::verifyResources() {
     money -= getTreatmentCost();
     mutex.unlock();
     return true;
-}
-
-void Clinic::updateInterface() {
-    interface->updateFund(uniqueId, money);
-    interface->updateStock(uniqueId, &stocks);
 }
 
 int Clinic::request(ItemType what, int qty) {
@@ -229,10 +221,6 @@ int Clinic::send(ItemType it, int qty, int bill){
 
 int Clinic::getAmountPaidToWorkers() {
     return nbTreated * getEmployeeSalary(getEmployeeThatProduces(ItemType::PatientHealed));
-}
-
-void Clinic::setInterface(IWindowInterface *windowInterface) {
-    interface = windowInterface;
 }
 
 std::map<ItemType, int> Clinic::getItemsForSale() {

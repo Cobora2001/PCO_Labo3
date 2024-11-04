@@ -20,11 +20,6 @@ Ambulance::Ambulance(int uniqueId, int fund, std::vector<ItemType> resourcesSupp
     updateInterface();
 }
 
-void Ambulance::updateInterface() {
-    interface->updateFund(uniqueId, money);
-    interface->updateStock(uniqueId, &stocks);
-}
-
 int& Ambulance::getNumberSick(){
     return stocks[ItemType::PatientSick];
 }
